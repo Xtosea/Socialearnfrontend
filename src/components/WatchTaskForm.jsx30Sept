@@ -1,0 +1,88 @@
+// src/components/WatchTaskForm.jsx
+import React, { useState, useEffect } from "react";
+import api, { submitVideo } from "../api/api";
+
+export default function WatchTaskForm({ platform }) {
+  const [duration, setDuration] = useState(30);
+  const [watches, setWatches] = useState(100);
+  const [userPoints, setUserPoints] = useState(0);
+  const [url, setUrl] = useState("");
+  const [msg, setMsg] = useState("");
+
+  const BASE_RATE = 2;
+
+  const isValidUrl = (string) => {
+    try { new URL(string); return true; }
+    catch (_) { return false; }
+  };
+
+  // Load current user points
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get("/users/me");
+        setUserPoints(res.data.points || 0);
+      } catch (err) { console.error(err); }
+    })();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!url || !isValidUrl(url)) return alert("Paste a valid URL");
+
+    try {
+      await submitVideo({ url, platform, duration, watches });
+      setMsg("✅ Video submitted!");
+      setUrl("");
+    } catch (err) {
+      console.error(err);
+      setMsg("❌ Submission failed! Check login or data.");
+    }
+  };
+
+  return (
+    <div className="max-w-xl mx-auto mt-6 p-6 bg-white rounded shadow space-y-4">
+      <div className="text-center text-lg font-bold text-purple-700">
+        🎯 Your Points Balance: {userPoints}
+      </div>
+
+      <h2 className="text-xl font-bold">{platform} Video Watch Task</h2>
+      {msg && <p className="text-green-600">{msg}</p>}
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <input
+          type="url"
+          placeholder={`Paste ${platform} video URL`}
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className="w-full p-2 border rounded"
+          required
+        />
+        <select
+          value={duration}
+          onChange={(e) => setDuration(parseInt(e.target.value))}
+          className="w-full p-2 border rounded"
+        >
+          {[30,60,90,120,180,240,300].map(d =>
+            <option key={d} value={d}>{d} sec</option>
+          )}
+        </select>
+        <select
+          value={watches}
+          onChange={(e) => setWatches(parseInt(e.target.value))}
+          className="w-full p-2 border rounded"
+        >
+          {[100,200,300,400,500,1000].map(w =>
+            <option key={w} value={w}>{w} Watches</option>
+          )}
+        </select>
+        <button
+          type="submit"
+          className="w-full p-2 rounded text-white bg-green-600 hover:bg-green-700"
+        >
+          Submit Video Watch Task
+        </button>
+      </form>
+    </div>
+  );
+}

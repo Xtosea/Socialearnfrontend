@@ -1,0 +1,167 @@
+// src/components/WatchPlayer.jsx
+import React, { useState, useRef, useEffect } from "react";
+import Confetti from "react-confetti";
+import api from "../api/api";
+import { getEmbedUrl } from "../utils/embedUrl";
+
+export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoints }) {
+  const iframeRef = useRef(null);
+  const audioRef = useRef(null);
+  const intervalRef = useRef(null);
+  const autoNextRef = useRef(null);
+
+  const [timeLeft, setTimeLeft] = useState(task.duration || 0);
+  const [completed, setCompleted] = useState(false);
+  const [rewardFlash, setRewardFlash] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  // Reset timer on task change
+  useEffect(() => {
+    setTimeLeft(task.duration || 0);
+    setCompleted(false);
+    setMsg("");
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (autoNextRef.current) clearTimeout(autoNextRef.current);
+  }, [task]);
+
+  // Play video and start timer
+  const handlePlay = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    intervalRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(intervalRef.current);
+          handleCompleteWatch();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    if (iframeRef.current) {
+      const src = getEmbedUrl(task.url, "youtube");
+      iframeRef.current.src = src + "?autoplay=1&controls=0";
+    }
+  };
+
+  const handlePause = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  const handleStop = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimeLeft(task.duration || 0);
+    setCompleted(false);
+    if (iframeRef.current) {
+      iframeRef.current.src = getEmbedUrl(task.url, "youtube") + "?controls=0";
+    }
+    if (autoNextRef.current) clearTimeout(autoNextRef.current);
+  };
+
+  const handleSkip = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimeLeft(0);
+    setCompleted(true);
+    if (iframeRef.current) {
+      iframeRef.current.src = getEmbedUrl(task.url, "youtube") + "?controls=0";
+    }
+    if (autoNextRef.current) clearTimeout(autoNextRef.current);
+    refreshTasks();
+  };
+
+  // ✅ Complete watch and reward points
+  const handleCompleteWatch = async () => {
+    if (completed) return;
+    setCompleted(true);
+
+    try {
+      const res = await api.post(`/tasks/watch/${task._id}/complete`);
+
+      if (setUserPoints) setUserPoints(res.data.currentPoints); // update user points
+
+      // Reward effects
+      setRewardFlash(true);
+      setShowConfetti(true);
+      setMsg(`✅ +${res.data.pointsEarned} Points!`);
+      audioRef.current?.play();
+
+      setTimeout(() => setRewardFlash(false), 2500);
+      setTimeout(() => setShowConfetti(false), 4000);
+
+      // Auto refresh tasks after 2s
+      autoNextRef.current = setTimeout(() => {
+        refreshTasks();
+      }, 2000);
+    } catch (err) {
+      console.error("Error completing watch:", err);
+      setMsg("❌ Error rewarding points");
+    }
+  };
+
+  const progressPercent = task.duration
+    ? ((task.duration - timeLeft) / task.duration) * 100
+    : 0;
+
+  return (
+    <div className="space-y-2 border p-4 rounded-lg shadow relative">
+      {/* Video iframe */}
+      <iframe
+        ref={iframeRef}
+        width="100%"
+        height="315"
+        src={getEmbedUrl(task.url, "youtube") + "?controls=0"}
+        title="Video Player"
+        frameBorder="0"
+        allowFullScreen
+      />
+
+      {/* Confetti */}
+      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
+
+      {/* Reward Flash */}
+      {rewardFlash && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white bg-green-500 px-6 py-3 rounded shadow-lg animate-pulse z-50">
+          🎉 +{task.points} Points!
+        </div>
+      )}
+
+      {/* Progress Bar */}
+      <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
+        <div
+          className="bg-green-500 h-3 rounded transition-all duration-300"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
+      {/* Info */}
+      <div className="flex justify-between text-sm text-gray-600">
+        <span>Duration: {task.duration}s</span>
+        <span>Reward: {task.points} points</span>
+        <span>Time left: {timeLeft}s</span>
+        <span>Total Points: {userPoints}</span>
+      </div>
+
+      {/* Controls */}
+      <div className="flex gap-2">
+        <button onClick={handlePlay} className="px-3 py-1 bg-green-500 text-white rounded">
+          ▶ Play
+        </button>
+        <button onClick={handlePause} className="px-3 py-1 bg-yellow-500 text-white rounded">
+          ❚❚ Pause
+        </button>
+        <button onClick={handleStop} className="px-3 py-1 bg-red-500 text-white rounded">
+          ■ Stop
+        </button>
+        <button onClick={handleSkip} className="px-3 py-1 bg-gray-500 text-white rounded">
+          ⏭ Skip
+        </button>
+      </div>
+
+      {msg && <p className="text-green-600 mt-1">{msg}</p>}
+
+      <audio ref={audioRef} src="/sounds/reward-sound.mp3" preload="auto" />
+    </div>
+  );
+}

@@ -1,0 +1,22 @@
+export const countriesPart4 = [
+  { code: "CD", name: "Congo, Democratic Republic", flag: "🇨🇩" },
+  { code: "CR", name: "Costa Rica", flag: "🇨🇷" },
+  { code: "HR", name: "Croatia", flag: "🇭🇷" },
+  { code: "CU", name: "Cuba", flag: "🇨🇺" },
+  { code: "CY", name: "Cyprus", flag: "🇨🇾" },
+  { code: "CZ", name: "Czech Republic", flag: "🇨🇿" },
+  { code: "DK", name: "Denmark", flag: "🇩🇰" },
+  { code: "DJ", name: "Djibouti", flag: "🇩🇯" },
+  { code: "DM", name: "Dominica", flag: "🇩🇲" },
+  { code: "DO", name: "Dominican Republic", flag: "🇩🇴" },
+  { code: "EC", name: "Ecuador", flag: "🇪🇨" },
+  { code: "EG", name: "Egypt", flag: "🇪🇬" },
+  { code: "SV", name: "El Salvador", flag: "🇸🇻" },
+  { code: "GQ", name: "Equatorial Guinea", flag: "🇬🇶" },
+  { code: "ER", name: "Eritrea", flag: "🇪🇷" },
+  { code: "EE", name: "Estonia", flag: "🇪🇪" },
+  { code: "SZ", name: "Eswatini", flag: "🇸🇿" },
+  { code: "ET", name: "Ethiopia", flag: "🇪🇹" },
+  { code: "FJ", name: "Fiji", flag: "🇫🇯" },
+  { code: "FI", name: "Finland", flag: "🇫🇮" }
+];

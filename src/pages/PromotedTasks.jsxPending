@@ -1,0 +1,50 @@
+// src/pages/PromotedTasks.jsx
+import React, { useState, useEffect, useContext } from "react";
+import { useParams } from "react-router-dom";
+import api from "../api/api";
+import { AuthContext } from "../context/AuthContext";
+import WatchPlayer from "../components/WatchPlayer";
+
+export default function PromotedTasks() {
+  const { platform } = useParams();
+  const { user } = useContext(AuthContext);
+  const [tasks, setTasks] = useState([]);
+
+  const fetchPromotedTasks = async () => {
+    try {
+      const res = await api.get(`/tasks/promoted/watch/${platform}`);
+      console.log("Fetched promoted tasks:", res.data.tasks); // ✅ log all tasks
+      setTasks(res.data.tasks || []); // include all tasks, even previously completed
+    } catch (err) {
+      console.error("Error fetching promoted tasks:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (platform) fetchPromotedTasks();
+  }, [platform]);
+
+  if (!tasks.length) {
+    return (
+      <p className="text-center text-gray-500 mt-6">
+        No promoted {platform} videos available right now.
+      </p>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto mt-6 space-y-6">
+      <h2 className="text-xl font-bold text-center mb-4">
+        Promoted {platform} Videos
+      </h2>
+
+      {tasks.map((task) => (
+        <WatchPlayer
+          key={task._id}
+          task={task}
+          refreshTasks={fetchPromotedTasks} // reload tasks after completion
+        />
+      ))}
+    </div>
+  );
+}
