@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Trophy, PlayCircle, Coins } from "lucide-react";
+import { Trophy, PlayCircle, Coins, Rocket } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -25,6 +25,14 @@ export default function HomePage() {
               with trending content. Climb the leaderboard, unlock achievements,
               and grow your reward wallet every day!
             </p>
+
+            <div className="bg-indigo-50 p-4 rounded-xl shadow-sm text-center">
+              <p className="text-indigo-700 font-medium leading-relaxed">
+                🚀 Boost or promote your social videos and encouragements with real people —
+                for free! Let your videos go viral and build your fanbase while earning
+                rewards along the way.
+              </p>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
               <div className="flex flex-col items-center">
