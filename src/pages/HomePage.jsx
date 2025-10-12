@@ -28,9 +28,11 @@ export default function HomePage() {
 
             <div className="bg-indigo-50 p-4 rounded-xl shadow-sm text-center">
               <p className="text-indigo-700 font-medium leading-relaxed">
-                🚀 Boost or promote your social videos and encouragements with real people —
+                🚀 As a content creator, boost your social media videos now such as YouTube, TikTok, 
+                Facebook, Instagram and Twitter with real views—
                 for free! Let your videos go viral and build your fanbase while earning
-                rewards along the way.
+                rewards along the way. Get real engagements on your videos such as subscriptions, 
+                comments, followers and share all free.
               </p>
             </div>
 
