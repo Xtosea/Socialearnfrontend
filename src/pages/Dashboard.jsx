@@ -5,61 +5,53 @@ import { LeaderboardContext } from "../context/LeaderboardContext";
 import { getVideoTasks, getSocialTasks, promoteTask } from "../api/tasks";
 import { getPromotionCosts } from "../api/promotion";
 import { Link } from "react-router-dom";
-import VideoCard from "../components/VideoCard";
-import ActionCard from "../components/ActionCard";
-import { 
-  FaYoutube, FaFacebook, FaInstagram, FaTwitter, FaTiktok, 
-  FaThumbsUp, FaShare, FaComment, FaUserPlus 
+import {
+  FaYoutube,
+  FaFacebook,
+  FaInstagram,
+  FaTwitter,
+  FaTiktok,
 } from "react-icons/fa";
 
 export default function Dashboard() {
   const { user, setUser } = useContext(AuthContext);
-  const { leaders = [], fetchLeaderboard = () => {} } = useContext(LeaderboardContext);
+  const { leaders = [], fetchLeaderboard = () => {} } =
+    useContext(LeaderboardContext);
 
   const [videos, setVideos] = useState([]);
-  const [actions, setActions] = useState([]);
-  const [tasks, setTasks] = useState([]);
   const [promotionCosts, setPromotionCosts] = useState({});
   const [loadingTaskId, setLoadingTaskId] = useState(null);
 
+  // Define icon mapping
   const ICONS = {
     youtube: <FaYoutube size={24} />,
-    tiktok: <FaTiktok size={24} />,
     facebook: <FaFacebook size={24} />,
     instagram: <FaInstagram size={24} />,
     twitter: <FaTwitter size={24} />,
-    like: <FaThumbsUp size={24} />,
-    share: <FaShare size={24} />,
-    comment: <FaComment size={24} />,
-    follow: <FaUserPlus size={24} />,
+    tiktok: <FaTiktok size={24} />,
   };
 
+  // Define promoted card info (videos + actions)
   const PROMOTED_CARDS = [
     { type: "watch", platform: "youtube", color: "bg-red-600" },
     { type: "watch", platform: "tiktok", color: "bg-pink-600" },
     { type: "watch", platform: "facebook", color: "bg-blue-600" },
     { type: "watch", platform: "instagram", color: "bg-purple-600" },
     { type: "watch", platform: "twitter", color: "bg-sky-600" },
-    { type: "action", platform: "like", color: "bg-green-600" },
-    { type: "action", platform: "share", color: "bg-indigo-600" },
-    { type: "action", platform: "comment", color: "bg-yellow-600" },
-    { type: "action", platform: "follow", color: "bg-pink-600" },
+    { type: "action", platform: "youtube", color: "bg-red-500" },
+    { type: "action", platform: "instagram", color: "bg-pink-500" },
+    { type: "action", platform: "facebook", color: "bg-blue-500" },
+    { type: "action", platform: "tiktok", color: "bg-purple-500" },
+    { type: "action", platform: "twitter", color: "bg-sky-500" },
   ];
 
-  // ================== FETCH DASHBOARD DATA ==================
+  // Fetch dashboard data
   const fetchData = async () => {
     try {
       const videoTasks = await getVideoTasks();
-      const socialTasks = await getSocialTasks();
       const promotionCostsData = await getPromotionCosts();
 
       setVideos(videoTasks.data || []);
-      setActions(socialTasks.data || []);
-      setTasks([
-        ...(videoTasks.data || []).map(t => ({ ...t, type: "video" })),
-        ...(socialTasks.data || []).map(t => ({ ...t, type: "social" })),
-      ]);
-
       setPromotionCosts(promotionCostsData.data || {});
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -68,17 +60,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // auto-refresh
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // ================== PROMOTE TASK ==================
+  // Handle promotion logic
   const handlePromote = async (task) => {
     if (!user) return;
-
-    let cost = task.promoteCost || 50;
-    if (task.type === "video") cost = promotionCosts.platforms?.[task.platform.toLowerCase()] || cost;
-    if (task.type === "social") cost = promotionCosts.actions?.[task.action.toLowerCase()] || cost;
+    let cost =
+      promotionCosts.platforms?.[task.platform.toLowerCase()] ||
+      task.promoteCost ||
+      50;
 
     if (user.points < cost) {
       alert(`You need ${cost} points to promote this task!`);
@@ -87,14 +79,9 @@ export default function Dashboard() {
 
     setLoadingTaskId(task._id);
     try {
-      const res = await promoteTask({ taskId: task._id, type: task.type });
+      const res = await promoteTask({ taskId: task._id, type: "video" });
       alert(res.data.message || "Task promoted!");
-      setUser(prev => ({ ...prev, points: res.data.remainingPoints }));
-
-      setTasks(prevTasks =>
-        prevTasks.map(t => (t._id === task._id ? { ...t, promoted: true } : t))
-      );
-
+      setUser((prev) => ({ ...prev, points: res.data.remainingPoints }));
       fetchLeaderboard();
     } catch (err) {
       console.error(err);
@@ -104,34 +91,80 @@ export default function Dashboard() {
     }
   };
 
-  // ================== RENDER ==================
   return (
     <div className="p-6 flex flex-col lg:flex-row gap-6">
-      {/* Main Feed */}
+      {/* === MAIN FEED === */}
       <div className="flex-1 space-y-8">
-        {/* Header */}
+        {/* === Header === */}
         <header className="mb-4">
-          <h2 className="text-3xl font-bold">Welcome, {user?.username || "User"}!</h2>
+          <h2 className="text-3xl font-bold">
+            Welcome, {user?.username || "User"}!
+          </h2>
           <p className="text-gray-600">Total Points: {user?.points || 0}</p>
         </header>
 
-        {/* Promoted Mini Cards with Submit Buttons */}
+        {/* ======= Social Action Quick Links ======= */}
+        <section>
+          <h3 className="text-xl font-semibold mb-3">Perform Social Actions</h3>
+          <nav className="flex flex-wrap gap-3 mb-6">
+            <Link
+              to="/action/youtube"
+              className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+            >
+              <FaYoutube /> YouTube
+            </Link>
+            <Link
+              to="/action/facebook"
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            >
+              <FaFacebook /> Facebook
+            </Link>
+            <Link
+              to="/action/instagram"
+              className="flex items-center gap-2 bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 transition"
+            >
+              <FaInstagram /> Instagram
+            </Link>
+            <Link
+              to="/action/twitter"
+              className="flex items-center gap-2 bg-sky-500 text-white px-4 py-2 rounded hover:bg-sky-600 transition"
+            >
+              <FaTwitter /> Twitter
+            </Link>
+            <Link
+              to="/action/tiktok"
+              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+            >
+              <FaTiktok /> TikTok
+            </Link>
+          </nav>
+        </section>
+
+        {/* ======= Promoted Tasks Section ======= */}
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Promoted Tasks & Submit</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            Promoted Tasks & Submissions
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {PROMOTED_CARDS.map(card => {
-              const watchLink = card.type === "watch" ? `/promoted/watch/${card.platform}` : `/promoted/action/${card.platform}`;
-              const submitLink = card.type === "watch" ? `/submit/${card.platform}` : null;
+            {PROMOTED_CARDS.map((card) => {
+              const routeLink =
+                card.type === "watch"
+                  ? `/promoted/watch/${card.platform}`
+                  : `/action/${card.platform}`;
+              const submitLink =
+                card.type === "watch" ? `/submit/${card.platform}` : null;
 
               return (
                 <div key={card.platform + card.type} className="space-y-2">
                   <Link
-                    to={watchLink}
+                    to={routeLink}
                     className={`block p-4 rounded shadow text-white ${card.color} hover:opacity-90 transition`}
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="text-xl font-bold capitalize">
-                        {card.platform} {card.type === "watch" ? "Videos" : "Tasks"}
+                        {card.platform}{" "}
+                        {card.type === "watch" ? "Videos" : "Tasks"}
                       </h3>
                       <span>{ICONS[card.platform]}</span>
                     </div>
@@ -149,61 +182,9 @@ export default function Dashboard() {
             })}
           </div>
         </section>
-
-        {/* Unified Task Feed */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Task Feed</h2>
-          <div className="space-y-4">
-            {tasks.map(task => {
-              let cost = task.promoteCost || 50;
-              if (task.type === "video") cost = promotionCosts.platforms?.[task.platform.toLowerCase()] || cost;
-              if (task.type === "social") cost = promotionCosts.actions?.[task.action.toLowerCase()] || cost;
-
-              return (
-                <div key={task._id} className="border p-4 rounded shadow-sm flex justify-between items-center bg-white">
-                  <div>
-                    <p className="font-semibold">{task.type.toUpperCase()} Task</p>
-                    <p>{task.type === "video" ? `Platform: ${task.platform}` : `Action: ${task.action}`}</p>
-                    <p>Points: {task.points}</p>
-                    <p>Promoted: {task.promoted ? "Yes" : "No"}</p>
-                  </div>
-                  <button
-                    onClick={() => handlePromote(task)}
-                    disabled={task.promoted || loadingTaskId === task._id}
-                    className={`px-4 py-2 rounded text-white ${
-                      task.promoted ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
-                    }`}
-                  >
-                    {task.promoted ? "Promoted" : `Promote (${cost} pts)`}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Video Tasks */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Available Video Tasks</h2>
-          {videos.length ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {videos.map(v => <VideoCard key={v._id} task={v} />)}
-            </div>
-          ) : <p>No video tasks available yet.</p>}
-        </section>
-
-        {/* Social Actions */}
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">Social Actions</h2>
-          {actions.length ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {actions.map(a => <ActionCard key={a._id} task={a} />)}
-            </div>
-          ) : <p>No social actions available yet.</p>}
-        </section>
       </div>
 
-      {/* Leaderboard Sidebar */}
+      {/* === Leaderboard Section === */}
       <aside className="w-80">
         <div className="p-4 border rounded shadow-sm bg-white">
           <h2 className="text-xl font-bold mb-2">Leaderboard</h2>
@@ -211,12 +192,14 @@ export default function Dashboard() {
             {leaders.length > 0 ? (
               leaders.map((u, i) => (
                 <li key={u._id} className="p-3 flex justify-between">
-                  <span>{i + 1}. {u.username}</span>
+                  <span>
+                    {i + 1}. {u.username}
+                  </span>
                   <span className="font-bold">{u.points} pts</span>
                 </li>
               ))
             ) : (
-              <li className="p-3">No leaderboard data</li>
+              <li className="p-3 text-gray-500">No leaderboard data yet</li>
             )}
           </ul>
         </div>
