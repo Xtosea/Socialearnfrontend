@@ -40,6 +40,7 @@ import PromotedTasks from "./pages/PromotedTasks";
         // Import wrapper
 import WatchTaskFormWrapper from "./pages/tasks/WatchTaskFormWrapper";
 //import TaskFeed from "./pages/TaskFeed";
+import ActionPage from "./pages/promoted/ActionPage"; 
 
 // Protect routes (for logged-in users only)
 function RequireAuth({ children }) {
@@ -86,8 +87,9 @@ export default function App() {
 
         {/* Promoted tasks */}
         <Route path="/promoted/watch/:platform" element={<PromotedTasks type="watch" />} />
-        <Route path="/promoted/action/:platform" element={<PromotedTasks type="action" />} />
+
         <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
+        <Route path="/action/:platform" element={<ActionPage />} />
       </Route>
 
       {/* Routes with Layout but public */}
