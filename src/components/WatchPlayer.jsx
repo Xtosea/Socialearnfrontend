@@ -87,22 +87,48 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
     handleCompleteWatch();
   };
 
-  // ----------------- REWARD (fixed) -----------------
-  const handleCompleteWatch = async () => {
-    if (completed) return;
-    setCompleted(true);
-    setIsPlaying(false);
+// ----------------- REWARD (simplified + reliable) -----------------
+const handleCompleteWatch = async () => {
+  if (completed) return;
+  setCompleted(true);
+  setIsPlaying(false);
 
-    if (iframeRef.current) {
-      iframeRef.current.src = getEmbedUrl(task.url, false);
-    }
+  if (iframeRef.current) {
+    iframeRef.current.src = getEmbedUrl(task.url, false);
+  }
 
-    try {
-      const res = await api.post(`/tasks/watch/${task._id}/complete`).catch((e) => {
-        // allow fallback even if API fails — still show earned points (optimistic)
-        console.error("API complete error:", e);
-        return null;
-      });
+  try {
+    console.log("🎬 handleCompleteWatch triggered for", task._id);
+
+    // ✅ Call backend to mark complete & reward
+    const res = await api.post(`/tasks/watch/${task._id}/complete`);
+    const earned = res.data?.rewardPoints || task.points || 0;
+
+    // ✅ Update user points locally
+    setUserPoints((prev) => prev + earned);
+
+    // ✅ Show reward effects
+    setRewardEarned(earned);
+    setRewardFlash(true);
+    setShowConfetti(true);
+    setShowRewardPopup(true);
+    audioRef.current?.play();
+
+    // ✅ Auto-hide effects after a few seconds
+    const t1 = setTimeout(() => setRewardFlash(false), 2500);
+    const t2 = setTimeout(() => setShowConfetti(false), 4000);
+    const t3 = setTimeout(() => setShowRewardPopup(false), 2500);
+    cleanupTimeoutsRef.current.push(t1, t2, t3);
+
+    // ✅ Refresh task list after short delay
+    autoNextRef.current = setTimeout(refreshTasks, 2000);
+
+    console.log("✅ Rewarded:", earned);
+  } catch (err) {
+    console.error("Reward error:", err);
+    alert("Error rewarding points. Try again.");
+  }
+};
 
       // Prefer API-provided newBalance, otherwise compute fallback
       const apiNewBalance = res?.data?.newBalance;
