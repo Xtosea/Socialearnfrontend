@@ -22,6 +22,8 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
   const [rewardEarned, setRewardEarned] = useState(null);
 
   const socketRef = useRef(null);
+
+  // 🔌 Connect to socket
   useEffect(() => {
     socketRef.current = io("http://localhost:5000");
     socketRef.current.emit("joinRoom", user._id);
@@ -35,7 +37,7 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
     };
   }, [user._id, setUserPoints]);
 
-  // clear intervals/timeouts when component unmounts
+  // 🧹 Cleanup intervals/timeouts when component unmounts
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -48,7 +50,6 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
   const startTimer = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
 
-    // reset in case user restarts
     setCompleted(false);
     setRewardEarned(null);
 
@@ -87,78 +88,50 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
     handleCompleteWatch();
   };
 
-// ----------------- REWARD (simplified + reliable) -----------------
-const handleCompleteWatch = async () => {
-  if (completed) return;
-  setCompleted(true);
-  setIsPlaying(false);
+  // ----------------- REWARD LOGIC -----------------
+  const handleCompleteWatch = async () => {
+    if (completed) return;
+    setCompleted(true);
+    setIsPlaying(false);
 
-  if (iframeRef.current) {
-    iframeRef.current.src = getEmbedUrl(task.url, false);
-  }
+    if (iframeRef.current) {
+      iframeRef.current.src = getEmbedUrl(task.url, false);
+    }
 
-  try {
-    console.log("🎬 handleCompleteWatch triggered for", task._id);
+    try {
+      const res = await api.post(`/tasks/watch/${task._id}/complete`).catch((e) => {
+        console.error("API complete error:", e);
+        return null;
+      });
 
-    // ✅ Call backend to mark complete & reward
-    const res = await api.post(`/tasks/watch/${task._id}/complete`);
-    const earned = res.data?.rewardPoints || task.points || 0;
-
-    // ✅ Update user points locally
-    setUserPoints((prev) => prev + earned);
-
-    // ✅ Show reward effects
-    setRewardEarned(earned);
-    setRewardFlash(true);
-    setShowConfetti(true);
-    setShowRewardPopup(true);
-    audioRef.current?.play();
-
-    // ✅ Auto-hide effects after a few seconds
-    const t1 = setTimeout(() => setRewardFlash(false), 2500);
-    const t2 = setTimeout(() => setShowConfetti(false), 4000);
-    const t3 = setTimeout(() => setShowRewardPopup(false), 2500);
-    cleanupTimeoutsRef.current.push(t1, t2, t3);
-
-    // ✅ Refresh task list after short delay
-    autoNextRef.current = setTimeout(refreshTasks, 2000);
-
-    console.log("✅ Rewarded:", earned);
-  } catch (err) {
-    console.error("Reward error:", err);
-    alert("Error rewarding points. Try again.");
-  }
-};
-
-      // Prefer API-provided newBalance, otherwise compute fallback
       const apiNewBalance = res?.data?.newBalance;
+      const earned = res?.data?.rewardPoints || task.points || 0;
       const newBalance =
         typeof apiNewBalance === "number"
           ? apiNewBalance
-          : (typeof userPoints === "number" ? userPoints + (task.points || 0) : (task.points || 0));
+          : (userPoints || 0) + earned;
 
-      // Update parent/user immediately
+      // ✅ Update user's wallet immediately
       setUserPoints(newBalance);
-
-      // notify others via socket
       socketRef.current.emit("walletUpdate", { userId: user._id, balance: newBalance });
 
-      // show reward UI with explicit earned amount
-      setRewardEarned(task.points || 0);
+      // ✅ Trigger reward animations
+      setRewardEarned(earned);
       setRewardFlash(true);
       setShowConfetti(true);
       setShowRewardPopup(true);
       audioRef.current?.play();
 
-      // hide flashes/popups after a short duration
+      // Hide popups gradually
       const t1 = setTimeout(() => setRewardFlash(false), 2500);
-      const t2 = setTimeout(() => setShowConfetti(false), 4000);
-      const t3 = setTimeout(() => setShowRewardPopup(false), 2500);
-
+      const t2 = setTimeout(() => setShowConfetti(false), 3500);
+      const t3 = setTimeout(() => setShowRewardPopup(false), 4000);
       cleanupTimeoutsRef.current.push(t1, t2, t3);
 
-      // refresh tasks after short delay (keeps existing behavior)
-      autoNextRef.current = setTimeout(refreshTasks, 2000);
+      // ✅ Refresh after all effects are done
+      autoNextRef.current = setTimeout(() => {
+        refreshTasks();
+      }, 4500);
     } catch (err) {
       console.error("Error completing watch:", err);
     }
@@ -178,7 +151,9 @@ const handleCompleteWatch = async () => {
       } else if (url.includes("tiktok.com")) {
         embedUrl = url.replace("/video/", "/embed/v2/");
       } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
-        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
+        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+          url
+        )}&show_text=false`;
       } else if (url.includes("instagram.com")) {
         embedUrl = `${url}embed`;
       } else {
@@ -190,7 +165,6 @@ const handleCompleteWatch = async () => {
           ? "&autoplay=1&mute=1"
           : "?autoplay=1&mute=1";
     } catch (e) {
-      // fallback to raw url if parsing fails
       embedUrl = url;
     }
 
@@ -212,10 +186,10 @@ const handleCompleteWatch = async () => {
           frameBorder="0"
           allow="autoplay; fullscreen"
           allowFullScreen
-          className={`${!isPlaying ? "pointer-events-none" : ""}`}
+          className={!isPlaying ? "pointer-events-none" : ""}
         />
 
-        {/* Overlay click blocker when video not started — clicking opens play-popup */}
+        {/* Overlay click blocker before playing */}
         {!isPlaying && (
           <div
             className="absolute inset-0 cursor-pointer bg-transparent"
@@ -224,13 +198,15 @@ const handleCompleteWatch = async () => {
         )}
       </div>
 
-      {/* Play guidance popup (when user clicks the iframe area) */}
+      {/* Play Instruction Popup */}
       {showPlayPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50">
           <div className="bg-white rounded-lg p-6 text-center shadow-lg max-w-sm">
             <h2 className="text-lg font-semibold mb-2">🎬 Hold on!</h2>
             <p className="text-gray-700">
-              Please use the <span className="text-green-600 font-bold">green Play button</span> below to start watching and earn rewards.
+              Please use the{" "}
+              <span className="text-green-600 font-bold">green Play button</span> below
+              to start watching and earn rewards.
             </p>
             <button
               onClick={() => setShowPlayPopup(false)}
@@ -242,10 +218,10 @@ const handleCompleteWatch = async () => {
         </div>
       )}
 
-      {/* Reward popup that shows exact points earned */}
+      {/* Reward Popup */}
       {showRewardPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50 pointer-events-none">
-          <div className="bg-green-500 text-white text-lg font-bold px-6 py-4 rounded-xl shadow-lg animate-bounce">
+          <div className="bg-green-500 text-white text-lg font-bold px-6 py-4 rounded-xl shadow-lg animate-bounce transition-opacity duration-700 opacity-100">
             🎉 You earned +{rewardEarned ?? task.points} points!
           </div>
         </div>
@@ -253,14 +229,14 @@ const handleCompleteWatch = async () => {
 
       {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
 
-      {/* Reward flash (large center flash used previously) */}
+      {/* Flash Message */}
       {rewardFlash && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white bg-green-500 px-6 py-3 rounded shadow-lg animate-pulse z-40">
           🎉 +{task.points} Points Earned!
         </div>
       )}
 
-      {/* Progress */}
+      {/* Progress Bar */}
       <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
         <div
           className="bg-green-500 h-3 rounded transition-all duration-300"
