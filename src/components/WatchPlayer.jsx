@@ -37,7 +37,7 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
     };
   }, [user._id, setUserPoints]);
 
-  // 🧹 Cleanup intervals/timeouts when component unmounts
+  // 🧹 Cleanup on unmount
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -137,7 +137,7 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
     }
   };
 
-  // ----------------- EMBED URL -----------------
+  // ----------------- EMBED URL (no mute anywhere) -----------------
   const getEmbedUrl = (url, autoplay = false) => {
     let embedUrl = "";
 
@@ -160,10 +160,11 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
         embedUrl = url;
       }
 
+      // ✅ Autoplay only — no mute parameter at all
       if (autoplay)
         embedUrl += embedUrl.includes("?")
-          ? "&autoplay=1&mute=1"
-          : "?autoplay=1&mute=1";
+          ? "&autoplay=1"
+          : "?autoplay=1";
     } catch (e) {
       embedUrl = url;
     }
@@ -184,7 +185,7 @@ export default function WatchPlayer({ task, refreshTasks, userPoints, setUserPoi
           src={getEmbedUrl(task.url, false)}
           title="Video Player"
           frameBorder="0"
-          allow="autoplay; fullscreen"
+          allow="autoplay; fullscreen; encrypted-media"
           allowFullScreen
           className={!isPlaying ? "pointer-events-none" : ""}
         />
