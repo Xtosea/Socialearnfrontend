@@ -1,9 +1,19 @@
 // src/api/api.js
 import axios from "axios";
 
+// ================== BASE URL HANDLING ==================
+// Automatically switches between localhost (development) and Render (production)
+const baseURL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://socialearnbackend.onrender.com/api");
+
+// Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true, // for cookie-based auth if needed
 });
 
 // ================== REQUEST INTERCEPTOR ==================
@@ -31,43 +41,48 @@ api.interceptors.response.use(
   }
 );
 
-// ================== AUTH ==================
+// =========================================================
+// ✅ AUTH ROUTES
+// =========================================================
 export const loginUser = (data) => api.post("/auth/login", data);
 export const registerUser = (data) => api.post("/auth/register", data);
 export const getCurrentUser = () => api.get("/users/me");
 export const updateUserProfile = (data) => api.put("/users/me", data);
 
-// ================== USERS ==================
+// =========================================================
+// ✅ USER ROUTES
+// =========================================================
 export const followUser = (userId) => api.post(`/users/follow/${userId}`);
 export const unfollowUser = (userId) => api.post(`/users/unfollow/${userId}`);
 export const getReferrals = () => api.get("/users/referrals");
 export const getLeaderboard = (limit = 3) =>
   api.get(`/users/leaderboard?limit=${limit}`);
+export const redeemPoints = (amount) => api.post("/users/redeem", { amount });
+export const transferPoints = (data) => api.post("/users/transfer", data);
 
-// ================== TASKS ==================
+// =========================================================
+// ✅ TASK ROUTES
+// =========================================================
 export const submitVideo = (data) => api.post("/tasks/video", data);
 export const getVideoTasks = () => api.get("/tasks/video");
 export const completeWatch = (taskId) =>
   api.post(`/tasks/watch/${taskId}/complete`);
 export const completeAction = (taskId) =>
-  api.post(`/tasks/action/${taskId}/complete`); // fixed typo
-
-// ================== SOCIAL TASKS ==================
+  api.post(`/tasks/action/${taskId}/complete`);
 export const submitAction = (data) => api.post("/tasks/social", data);
 export const getSocialTasks = () => api.get("/tasks/social");
 
-// ================== PROMOTIONS ==================
+// =========================================================
+// ✅ PROMOTION ROUTES
+// =========================================================
 export const getPromotedTasks = (type, platform) =>
   api.get(`/tasks/promoted/${type}/${platform}`);
 export const getPromotionCosts = () => api.get("/tasks/promoted-costs");
 export const getPromotedCounts = () => api.get("/tasks/promoted-counts");
 
-// ================== WALLET (USERS) ==================
-export const redeemPoints = (amount) =>
-  api.post("/users/redeem", { amount });
-export const transferPoints = (data) => api.post("/users/transfer", data);
-
-// ================== ADMIN ==================
+// =========================================================
+// ✅ WALLET ROUTES (ADMIN & USER)
+// =========================================================
 export const getWallet = () => api.get("/admin/wallet");
 export const resetWallet = () => api.post("/admin/wallet/reset");
 export const adminAddPoints = (data) => api.post("/admin/points/add", data);
@@ -77,4 +92,7 @@ export const rewardLeaderboard = () =>
   api.post("/admin/points/reward-leaderboard");
 export const getAllUsers = () => api.get("/admin/users");
 
+// =========================================================
+// ✅ EXPORT DEFAULT
+// =========================================================
 export default api;
