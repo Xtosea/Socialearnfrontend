@@ -1,4 +1,3 @@
-// src/pages/PromotedTasks.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
@@ -17,14 +16,13 @@ const getPromotedTasks = (normalizedType, platform) => {
 };
 
 export default function PromotedTasks({ type }) {
-  const { platform } = useParams(); // only platform from URL
+  const { platform } = useParams();
   const { user, setUser } = useContext(AuthContext);
   const { fetchLeaderboard } = useContext(LeaderboardContext);
 
-  // normalize type for API + rendering
   const normalizedType = type === "watch" ? "video" : type;
-
   const [tasks, setTasks] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingTaskId, setLoadingTaskId] = useState(null);
 
@@ -32,20 +30,18 @@ export default function PromotedTasks({ type }) {
   // Fetch tasks
   // -----------------------------
   const fetchTasks = async () => {
-  try {
-    setLoading(true);
-    const response = await getPromotedTasks(normalizedType, platform);
-
-    // Always normalize into array
-    const tasksData = response.data?.tasks ?? response.data ?? [];
-    setTasks(tasksData);
-  } catch (err) {
-    console.error("Failed to fetch promoted tasks:", err);
-    setTasks([]);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      const response = await getPromotedTasks(normalizedType, platform);
+      const tasksData = response.data?.tasks ?? response.data ?? [];
+      setTasks(tasksData);
+    } catch (err) {
+      console.error("Failed to fetch promoted tasks:", err);
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (platform) fetchTasks();
@@ -56,7 +52,6 @@ export default function PromotedTasks({ type }) {
   // -----------------------------
   const handlePromote = async (task) => {
     if (!user) return;
-
     const cost = task.promoteCost || 50;
     if (user.points < cost) {
       alert(`You need ${cost} points to promote this task!`);
@@ -67,18 +62,12 @@ export default function PromotedTasks({ type }) {
     try {
       const res = await promoteTask({ taskId: task._id, type: task.type });
       alert(res.data.message || "Task promoted!");
-
-      // update user points in context
       setUser((prev) => ({ ...prev, points: res.data.remainingPoints }));
-
-      // update tasks list
       setTasks((prevTasks) =>
         prevTasks.map((t) =>
           t._id === task._id ? { ...t, promoted: true } : t
         )
       );
-
-      // refresh leaderboard
       fetchLeaderboard();
     } catch (err) {
       console.error("Promotion error:", err);
@@ -89,53 +78,85 @@ export default function PromotedTasks({ type }) {
   };
 
   // -----------------------------
+  // Auto Next Video
+  // -----------------------------
+  const handleNext = () => {
+    if (tasks.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % tasks.length);
+  };
+
+  const handlePrev = () => {
+    if (tasks.length === 0) return;
+    setCurrentIndex((prev) =>
+      prev === 0 ? tasks.length - 1 : prev - 1
+    );
+  };
+
+  // -----------------------------
   // Render
   // -----------------------------
   if (loading) return <p>Loading promoted tasks...</p>;
 
+  if (tasks.length === 0)
+    return <p>No promoted {normalizedType} tasks available yet.</p>;
+
+  const activeTask = tasks[currentIndex];
+
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <h2 className="text-2xl font-bold mb-4 capitalize">
-        Promoted {normalizedType} Tasks ({platform})
+      {/* 🌟 Dynamic Heading */}
+      <h2 className="text-2xl font-bold mb-4 capitalize text-center">
+        {platform === "youtube" && "🎬 Promoted YouTube Video"}
+        {platform === "facebook" && "📘 Promoted Facebook Video"}
+        {platform === "instagram" && "📸 Promoted Instagram Video"}
+        {platform === "tiktok" && "🎵 Promoted TikTok Video"}
+        {platform === "twitter" && "🐦 Promoted Twitter Video"}
+        {!["youtube", "facebook", "instagram", "tiktok", "twitter"].includes(platform) &&
+          `Promoted ${platform} Video`}
       </h2>
 
-      {tasks.length === 0 ? (
-        <p>No promoted {normalizedType} tasks available yet.</p>
+      {/* 🎥 Video Player */}
+      {normalizedType === "video" ? (
+        <WatchPlayer
+          key={activeTask._id}
+          task={activeTask}
+          refreshTasks={handleNext} // ✅ auto-next
+          userPoints={user?.points || 0}
+          setUserPoints={(points) => setUser((prev) => ({ ...prev, points }))}
+          autoPlayNext // ✅ New prop to enable auto-play next
+        />
       ) : (
-        tasks.map((task) => (
-          <div
-            key={task._id}
-            className="border p-4 rounded shadow-sm bg-white flex flex-col gap-4"
-          >
-            {normalizedType === "video" ? (
-              <WatchPlayer
-                task={task}
-                refreshTasks={fetchTasks}
-                userPoints={user?.points || 0}
-                setUserPoints={(points) =>
-                  setUser((prev) => ({ ...prev, points }))
-                }
-              />
-            ) : (
-              <ActionCard task={task} type={normalizedType} />
-            )}
-
-            <button
-              onClick={() => handlePromote(task)}
-              disabled={task.promoted || loadingTaskId === task._id}
-              className={`px-4 py-2 rounded text-white ${
-                task.promoted
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
-              }`}
-            >
-              {task.promoted
-                ? "Promoted"
-                : `Promote (${task.promoteCost || 50} pts)`}
-            </button>
-          </div>
-        ))
+        <ActionCard task={activeTask} type={normalizedType} />
       )}
+
+      {/* Controls */}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={handlePrev}
+          className="px-4 py-2 bg-gray-400 text-white rounded"
+        >
+          ◀ Prev
+        </button>
+        <button
+          onClick={() => handlePromote(activeTask)}
+          disabled={activeTask.promoted || loadingTaskId === activeTask._id}
+          className={`px-4 py-2 rounded text-white ${
+            activeTask.promoted
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600"
+          }`}
+        >
+          {activeTask.promoted
+            ? "Promoted"
+            : `Promote (${activeTask.promoteCost || 50} pts)`}
+        </button>
+        <button
+          onClick={handleNext}
+          className="px-4 py-2 bg-gray-400 text-white rounded"
+        >
+          Next ▶
+        </button>
+      </div>
     </div>
   );
 }
