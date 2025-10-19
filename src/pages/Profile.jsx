@@ -1,189 +1,211 @@
-// src/pages/Profile.jsx
 import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import GoBackButton from "../components/GoBackButton"; // adjust path if needed
+import { Copy, CheckCircle, Globe, Users } from "lucide-react";
+import GoBackButton from "../components/GoBackButton";
 
 export default function Profile() {
   const { user, setUser, updateProfile } = useContext(AuthContext);
   const [editing, setEditing] = useState(false);
-
-  const [email, setEmail] = useState(user?.email || "");
-  const [bio, setBio] = useState(user?.bio || "");
-  const [dob, setDob] = useState(user?.dob || "");
+  const [email, setEmail] = useState("");
+  const [bio, setBio] = useState("");
+  const [dob, setDob] = useState("");
+  const [country, setCountry] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState({});
   const [toast, setToast] = useState(null);
-
-  const BIO_MAX = 200;
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (editing) setErrors({});
-  }, [editing]);
+    if (user) {
+      setEmail(user.email || "");
+      setBio(user.bio || "");
+      setDob(user.dob || "");
+      setCountry(user.country || "");
+    }
+  }, [user]);
 
-  if (!user) return <div>Loading...</div>;
+  if (!user) return <div>Loading profile...</div>;
 
-  const validate = () => {
-    const errs = {};
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = "Invalid email address";
-    if (password && password.length < 6) errs.password = "Password must be at least 6 characters";
-    if (bio.length > BIO_MAX) errs.bio = `Bio cannot exceed ${BIO_MAX} characters`;
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+  const handleCopyReferral = () => {
+    const refLink = `${window.location.origin}/register?ref=${user.referralCode}`;
+    navigator.clipboard.writeText(refLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const showToast = (type, message) => {
     setToast({ type, message, visible: true });
-    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 3000);
+    setTimeout(() => setToast(null), 2500);
   };
 
   const handleSave = async () => {
-    if (!validate()) return;
-    setSaving(true);
     try {
-      const updatedFields = { email, bio, dob };
+      const updatedFields = { email, bio, dob, country };
       if (password) updatedFields.password = password;
-
       const updatedUser = await updateProfile(updatedFields);
       setUser(updatedUser);
-      showToast("success", "Profile updated successfully!");
-      setPassword("");
       setEditing(false);
-    } catch (err) {
-      console.error(err);
+      showToast("success", "Profile updated successfully!");
+    } catch {
       showToast("error", "Failed to update profile.");
-    } finally {
-      setSaving(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto relative">
+    <div className="p-6 max-w-2xl mx-auto">
       <GoBackButton />
-      <h1 className="text-3xl font-bold mb-4">Profile</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Profile</h1>
 
       {toast && (
         <div
-          className={`fixed top-4 right-4 px-4 py-2 rounded shadow text-white transform transition-all duration-300 ${
+          className={`fixed top-4 right-4 px-4 py-2 rounded text-white shadow transition ${
             toast.type === "success" ? "bg-green-600" : "bg-red-600"
-          } ${toast.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}
+          }`}
         >
           {toast.message}
         </div>
       )}
 
-      <div className="space-y-4">
-        {/* Email */}
-        <div>
-          <label className="block font-medium mb-1">Email:</label>
-          {editing ? (
-            <>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={`w-full border px-3 py-2 rounded ${errors.email ? "border-red-500" : ""}`}
-              />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-            </>
-          ) : (
-            <p>{user.email}</p>
-          )}
+      {/* User Info Card */}
+      <div className="bg-white rounded-xl shadow p-5 mb-6">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          @{user.username}
+        </h2>
+
+        <div className="space-y-2 text-gray-700">
+          <p>
+            <Globe className="inline w-4 h-4 mr-2 text-blue-500" />
+            <strong>Country:</strong> {user.country || "Not set"}
+          </p>
+          <p>
+            <Users className="inline w-4 h-4 mr-2 text-blue-500" />
+            <strong>Followers:</strong> {user.followers?.length || 0}
+            {" · "}
+            <strong>Following:</strong> {user.following?.length || 0}
+          </p>
+          <p>
+            <strong>Points:</strong>{" "}
+            <span className="text-green-600 font-semibold">{user.points}</span>
+          </p>
         </div>
 
-        {/* Bio */}
-        <div>
-          <label className="block font-medium mb-1">Bio:</label>
-          {editing ? (
-            <>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX))}
-                className={`w-full border px-3 py-2 rounded ${errors.bio ? "border-red-500" : ""}`}
-                rows={3}
-                placeholder="Write a short bio"
-              />
-              <p className="text-gray-500 text-sm mt-1">{bio.length}/{BIO_MAX}</p>
-              {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
-            </>
-          ) : (
-            <p>{user.bio || "Not set"}</p>
-          )}
+        {/* Referral Link Section */}
+        <div className="mt-4 bg-gray-50 p-3 rounded-lg">
+          <p className="text-sm text-gray-600 mb-2 font-medium">
+            Invite friends and earn rewards
+          </p>
+          <div className="flex items-center justify-between bg-white border rounded-lg p-2">
+            <span className="truncate text-gray-700 text-sm">
+              {`${window.location.origin}/register?ref=${user.referralCode}`}
+            </span>
+            <button
+              onClick={handleCopyReferral}
+              className="ml-3 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              {copied ? (
+                <CheckCircle className="w-4 h-4" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+            </button>
+          </div>
         </div>
+      </div>
 
-        {/* Date of Birth */}
-        <div>
-          <label className="block font-medium mb-1">Date of Birth:</label>
-          {editing ? (
+      {/* Editable Profile Details */}
+      <div className="bg-white rounded-xl shadow p-5">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Details</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block font-medium">Email</label>
             <input
+              className="w-full border rounded p-2"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={!editing}
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Bio</label>
+            <textarea
+              className="w-full border rounded p-2"
+              rows={3}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              disabled={!editing}
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Date of Birth</label>
+            <input
+              className="w-full border rounded p-2"
               type="date"
               value={dob}
               onChange={(e) => setDob(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
+              disabled={!editing}
             />
-          ) : (
-            <p>{user.dob || "Not set"}</p>
+          </div>
+
+          <div>
+            <label className="block font-medium">Country</label>
+            <input
+              className="w-full border rounded p-2"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              disabled={!editing}
+              placeholder="Country of origin"
+            />
+          </div>
+
+          {editing && (
+            <div>
+              <label className="block font-medium">Change Password</label>
+              <input
+                className="w-full border rounded p-2"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter new password (optional)"
+              />
+            </div>
           )}
         </div>
 
-        {/* Password */}
-        {editing && (
-          <div>
-            <label className="block font-medium mb-1">Change Password:</label>
-            <div className="flex">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password"
-                className={`w-full border px-3 py-2 rounded ${errors.password ? "border-red-500" : ""}`}
-              />
+        {/* Buttons */}
+        <div className="mt-6 flex gap-3">
+          {editing ? (
+            <>
               <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="ml-2 px-3 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                {showPassword ? "Hide" : "Show"}
+                Save
               </button>
-            </div>
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-          </div>
-        )}
-      </div>
-
-      <div className="mt-6 flex gap-3">
-        {editing ? (
-          <>
+              <button
+                onClick={() => {
+                  setEditing(false);
+                  setEmail(user.email);
+                  setBio(user.bio || "");
+                  setDob(user.dob || "");
+                  setCountry(user.country || "");
+                  setPassword("");
+                }}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
             <button
-              onClick={handleSave}
+              onClick={() => setEditing(true)}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              disabled={saving}
             >
-              {saving ? "Saving..." : "Save"}
+              Edit Profile
             </button>
-            <button
-              onClick={() => {
-                setEditing(false);
-                setEmail(user.email);
-                setBio(user.bio || "");
-                setDob(user.dob || "");
-                setPassword("");
-                setErrors({});
-              }}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setEditing(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Edit Profile
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
