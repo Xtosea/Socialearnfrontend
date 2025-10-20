@@ -158,25 +158,23 @@ export default function WatchPlayer({
   return (
     <div className="relative border p-4 rounded-lg shadow space-y-3 bg-white">
       {/* 🎥 Video */}
-      <div className="relative w-full h-[315px] overflow-hidden rounded-lg">
-        <iframe
-          ref={iframeRef}
-          width="100%"
-          height="315"
-          src={getEmbedUrl(task.url, false)}
-          title="Video Player"
-          frameBorder="0"
-          allow="autoplay; fullscreen; encrypted-media"
-          allowFullScreen
-          className={!isPlaying ? "pointer-events-none" : ""}
-        />
-        {!isPlaying && (
-          <div
-            className="absolute inset-0 cursor-pointer bg-transparent"
-            onClick={() => setShowPlayPopup(true)}
-          />
-        )}
-      </div>
+<div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
+  <iframe
+    ref={iframeRef}
+    className="absolute top-0 left-0 w-full h-full"
+    src={getEmbedUrl(task.url, false)}
+    title="Reel Player"
+    frameBorder="0"
+    allow="autoplay; fullscreen; encrypted-media"
+    allowFullScreen
+  />
+  {!isPlaying && (
+    <div
+      className="absolute inset-0 cursor-pointer bg-transparent"
+      onClick={() => setShowPlayPopup(true)}
+    />
+  )}
+</div>
 
       {/* 💬 "Watch to earn" text */}
       <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
