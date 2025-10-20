@@ -1,209 +1,233 @@
-import React, { useState, useEffect } from "react";
-import api, { submitVideo } from "../api/api";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import Confetti from "react-confetti";
+import api from "../api/api";
+import { AuthContext } from "../context/AuthContext";
 import { io } from "socket.io-client";
 
-const DURATION_OPTIONS = [15, 30, 45, 60];
-const WATCH_OPTIONS = [50, 100, 200, 300, 500, 1000];
-const BASE_RATE = 2; // points per 30s
+export default function WatchPlayer({
+  task,
+  refreshTasks,
+  userPoints,
+  setUserPoints,
+  goToNextTask, // 👈 parent should pass this from PromotedWatchTasks
+}) {
+  const { user } = useContext(AuthContext);
+  const intervalRef = useRef(null);
+  const autoNextRef = useRef(null);
+  const audioRef = useRef(null);
+  const iframeRef = useRef(null);
+  const cleanupTimeoutsRef = useRef([]);
+  const socketRef = useRef(null);
 
-const isValidUrl = (string) => {
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
-  }
-};
+  const [timeLeft, setTimeLeft] = useState(task.duration);
+  const [completed, setCompleted] = useState(false);
+  const [rewardFlash, setRewardFlash] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showRewardPopup, setShowRewardPopup] = useState(false);
+  const [rewardEarned, setRewardEarned] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showPlayPopup, setShowPlayPopup] = useState(false);
 
-export default function WatchTaskForm({ platform }) {
-  const [duration, setDuration] = useState(30);
-  const [watches, setWatches] = useState(100);
-  const [pointsPerView, setPointsPerView] = useState(0);
-  const [totalPointsFund, setTotalPointsFund] = useState(0);
-  const [url, setUrl] = useState("");
-  const [msg, setMsg] = useState("");
-  const [userPoints, setUserPoints] = useState(0);
-  const [showWarning, setShowWarning] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  // Initialize socket
+  // 🔌 Connect socket
   useEffect(() => {
-    const socket = io(api.defaults.baseURL); // connect to backend
+    socketRef.current = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000");
+    socketRef.current.emit("joinRoom", user._id);
 
-    // Listen for points updates
-    socket.on("pointsUpdate", (data) => {
-      if (data.points !== undefined) setUserPoints(data.points);
+    socketRef.current.on("walletUpdated", ({ userId, balance }) => {
+      if (userId === user._id) setUserPoints(balance);
     });
 
     return () => {
-      socket.disconnect();
+      socketRef.current.disconnect();
+    };
+  }, [user._id, setUserPoints]);
+
+  // 🧹 Cleanup
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (autoNextRef.current) clearTimeout(autoNextRef.current);
+      cleanupTimeoutsRef.current.forEach((t) => clearTimeout(t));
     };
   }, []);
 
-  // Fetch user points once
-  const fetchUserPoints = async () => {
-    try {
-      const res = await api.get("/users/me");
-      setUserPoints(res.data.points || 0);
-    } catch (err) {
-      console.error("Error fetching user points:", err);
-    }
-  };
-
+  // 🔄 Reset timer when task changes
   useEffect(() => {
-    fetchUserPoints();
-  }, []);
+    stopTimer();
+    setTimeLeft(task.duration);
+    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+  }, [task]);
 
-  // Recalculate points and fund
-  useEffect(() => {
-    const cost = BASE_RATE * Math.ceil(duration / 30);
-    const fund = cost * watches;
-    setPointsPerView(cost);
-    setTotalPointsFund(fund);
-    setShowWarning(fund > userPoints);
-  }, [duration, watches, userPoints]);
+  // 🕒 Timer logic
+  const startTimer = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setCompleted(false);
+    setRewardEarned(null);
+    setIsPlaying(true);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!url || !isValidUrl(url)) return alert("Please paste a valid video URL");
-
-    if (totalPointsFund > userPoints) return alert("❌ Not enough points to create this task");
-
-    try {
-      setLoading(true);
-
-      const res = await submitVideo({
-        url,
-        platform,
-        duration,
-        points: pointsPerView,
-        maxWatches: watches,
-        fund: totalPointsFund,
+    intervalRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(intervalRef.current);
+          handleCompleteWatch();
+          return 0;
+        }
+        return prev - 1;
       });
+    }, 1000);
 
-      // Backend returns updated points
-      const updatedPoints = res.data.points ?? userPoints;
-      setUserPoints(updatedPoints);
+    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, true);
+  };
 
-      setMsg("✅ Video watch task submitted!");
-      setUrl("");
-      setDuration(30);
-      setWatches(100);
-      setShowWarning(false);
+  const stopTimer = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimeLeft(task.duration);
+    setCompleted(false);
+    setIsPlaying(false);
+    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+  };
 
-      setTimeout(() => setMsg(""), 4000);
+  // 🎯 Complete + Reward + Auto-next
+  const handleCompleteWatch = async () => {
+    if (completed) return;
+    setCompleted(true);
+    setIsPlaying(false);
+    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+
+    try {
+      const res = await api.post(`/tasks/watch/${task._id}/complete`);
+      const earned = res?.data?.rewardPoints || task.points || 0;
+      const newBalance = res?.data?.newBalance ?? userPoints + earned;
+
+      setUserPoints(newBalance);
+      socketRef.current.emit("walletUpdate", { userId: user._id, balance: newBalance });
+
+      // 🎉 Reward visuals
+      setRewardEarned(earned);
+      setShowRewardPopup(true);
+      setRewardFlash(true);
+      setShowConfetti(true);
+      audioRef.current?.play();
+
+      const t1 = setTimeout(() => setRewardFlash(false), 2000);
+      const t2 = setTimeout(() => setShowConfetti(false), 3000);
+      const t3 = setTimeout(() => setShowRewardPopup(false), 3500);
+      cleanupTimeoutsRef.current.push(t1, t2, t3);
+
+      // ✅ Auto next video after popup
+      autoNextRef.current = setTimeout(() => {
+        if (goToNextTask) goToNextTask(); // move to next
+        setTimeout(() => {
+          const playBtn = document.querySelector("button.bg-green-600");
+          playBtn?.click();
+        }, 1500);
+      }, 4000);
     } catch (err) {
-      console.error("Submission error:", err);
-      setMsg("❌ Submission failed! Please check your data or login status.");
-      setTimeout(() => setMsg(""), 4000);
-    } finally {
-      setLoading(false);
+      console.error("Error completing watch:", err);
     }
   };
+
+  // 🌐 Embed builder
+  const getEmbedUrl = (url, autoplay = false) => {
+    let embedUrl = "";
+    try {
+      if (url.includes("youtube.com")) {
+        const id = new URL(url).searchParams.get("v");
+        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
+      } else if (url.includes("youtu.be")) {
+        const id = url.split("/").pop();
+        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
+      } else if (url.includes("tiktok.com")) {
+        embedUrl = url.replace("/video/", "/embed/v2/");
+      } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
+        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
+      } else if (url.includes("instagram.com")) {
+        embedUrl = `${url}embed`;
+      } else {
+        embedUrl = url;
+      }
+      if (autoplay) embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
+    } catch {
+      embedUrl = url;
+    }
+    return embedUrl;
+  };
+
+  const progressPercent = ((task.duration - timeLeft) / task.duration) * 100;
 
   return (
-    <div className="max-w-xl mx-auto mt-6 p-6 bg-white rounded shadow space-y-4">
-      <div className="text-center text-lg font-bold text-purple-700">
-        🎯 Your Points Balance: {userPoints}
+    <div className="relative border p-4 rounded-lg shadow space-y-3 bg-white">
+      {/* 🎥 Video */}
+<div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
+  <iframe
+    ref={iframeRef}
+    className="absolute top-0 left-0 w-full h-full"
+    src={getEmbedUrl(task.url, false)}
+    title="Reel Player"
+    frameBorder="0"
+    allow="autoplay; fullscreen; encrypted-media"
+    allowFullScreen
+  />
+  {!isPlaying && (
+    <div
+      className="absolute inset-0 cursor-pointer bg-transparent"
+      onClick={() => setShowPlayPopup(true)}
+    />
+  )}
+</div>
+
+      {/* 💬 "Watch to earn" text */}
+      <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
+        🎯 Watch this video and earn +{task.points} points!
       </div>
 
-      <h2 className="text-xl font-bold">{platform} Video Watch Task</h2>
-
-      {msg && (
-        <p className={msg.startsWith("✅") ? "text-green-600" : "text-red-600"}>
-          {msg}
-        </p>
+      {/* 🎉 Reward Popup */}
+      {showRewardPopup && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50 pointer-events-none">
+          <div className="bg-green-500 text-white text-lg font-bold px-6 py-4 rounded-xl shadow-lg animate-bounce">
+            🎉 You earned +{rewardEarned ?? task.points} points for watching this video!
+          </div>
+        </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="url"
-          placeholder={`Paste ${platform} video URL`}
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="w-full p-2 border rounded"
-          required
+      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
+
+      {/* 🔋 Progress */}
+      <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
+        <div
+          className="bg-green-500 h-3 rounded transition-all duration-300"
+          style={{ width: `${progressPercent}%` }}
         />
+      </div>
 
-        <select
-          value={duration}
-          onChange={(e) => setDuration(parseInt(e.target.value))}
-          className="w-full p-2 border rounded"
-        >
-          {DURATION_OPTIONS.map((d) => (
-            <option key={d} value={d}>
-              {d} sec
-            </option>
-          ))}
-        </select>
+      {/* Stats */}
+      <div className="flex justify-between text-sm text-gray-600">
+        <span>⏱ {task.duration}s</span>
+        <span>🎁 {task.points} pts</span>
+        <span>🕒 {timeLeft}s left</span>
+        <span>💰 Total: {userPoints}</span>
+      </div>
 
-        <select
-          value={watches}
-          onChange={(e) => setWatches(parseInt(e.target.value))}
-          className="w-full p-2 border rounded"
-        >
-          {WATCH_OPTIONS.map((w) => (
-            <option key={w} value={w}>
-              {w} Watches
-            </option>
-          ))}
-        </select>
-
-        <div className="bg-gray-100 p-3 rounded space-y-1">
-          <p className="font-bold text-blue-700">
-            Reward Per View: {pointsPerView} points
-          </p>
-          <p className="font-bold text-indigo-700">
-            Total Points Required: {totalPointsFund}
-          </p>
-          {showWarning && (
-            <p className="text-red-600 font-semibold">
-              ❌ You don’t have enough points to fund this task.
-            </p>
-          )}
-        </div>
-
+      {/* 🎮 Controls */}
+      <div className="flex gap-2">
         <button
-          type="submit"
-          disabled={showWarning || loading}
-          className={`w-full p-2 rounded text-white ${
-            showWarning || loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700"
+          onClick={startTimer}
+          disabled={isPlaying}
+          className={`px-4 py-2 rounded text-white font-semibold ${
+            isPlaying ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
           }`}
         >
-          {loading ? (
-            <span className="flex items-center justify-center space-x-2">
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                ></path>
-              </svg>
-              <span>Submitting...</span>
-            </span>
-          ) : showWarning ? (
-            "Insufficient Points"
-          ) : (
-            "Submit Video Watch Task"
-          )}
+          ▶ Play
         </button>
-      </form>
+        <button
+          onClick={stopTimer}
+          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-semibold"
+        >
+          ■ Stop
+        </button>
+      </div>
+
+      <audio ref={audioRef} src="/sounds/reward-sound.mp3" preload="auto" />
     </div>
   );
 }
