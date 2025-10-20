@@ -1,3 +1,4 @@
+// src/components/WatchPlayer.jsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import Confetti from "react-confetti";
 import api from "../api/api";
@@ -12,11 +13,13 @@ export default function WatchPlayer({
   goToNextTask,
 }) {
   const { user } = useContext(AuthContext);
+
   const intervalRef = useRef(null);
   const autoNextRef = useRef(null);
+  const audioRef = useRef(null);
   const cleanupTimeoutsRef = useRef([]);
   const socketRef = useRef(null);
-  const audioRef = useRef(null);
+  const videoContainerRef = useRef(null);
 
   const [timeLeft, setTimeLeft] = useState(task.duration);
   const [completed, setCompleted] = useState(false);
@@ -25,7 +28,7 @@ export default function WatchPlayer({
   const [showRewardPopup, setShowRewardPopup] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // SOCKET CONNECTION
+  // 🔌 Socket connection
   useEffect(() => {
     socketRef.current = io(
       import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"
@@ -37,31 +40,14 @@ export default function WatchPlayer({
     return () => socketRef.current.disconnect();
   }, [user._id, setUserPoints]);
 
-  // LOAD SOCIAL SDKs
+  // 🎥 Render video whenever task changes
   useEffect(() => {
-    const loadScript = (id, src) => {
-      if (!document.getElementById(id)) {
-        const script = document.createElement("script");
-        script.id = id;
-        script.src = src;
-        script.async = true;
-        document.body.appendChild(script);
-      }
-    };
-    loadScript("tiktok-embed", "https://www.tiktok.com/embed.js");
-    loadScript("fb-sdk", "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v17.0");
-    loadScript("instagram-embed", "https://www.instagram.com/embed.js");
-  }, []);
-
-  // HANDLE NEW TASK
-  useEffect(() => {
+    renderEmbed(task.url, isPlaying);
     stopTimer();
     setTimeLeft(task.duration);
-    setCompleted(false);
-    renderEmbed(task.url);
   }, [task]);
 
-  // CLEANUP
+  // 🧹 Cleanup
   useEffect(() => {
     return () => {
       clearInterval(intervalRef.current);
@@ -70,11 +56,13 @@ export default function WatchPlayer({
     };
   }, []);
 
-  // TIMER CONTROL
+  // ▶ Start watching
   const startTimer = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsPlaying(true);
     setCompleted(false);
+    setIsPlaying(true);
+    renderEmbed(task.url, true);
+
     intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -87,21 +75,25 @@ export default function WatchPlayer({
     }, 1000);
   };
 
+  // ■ Stop watching
   const stopTimer = () => {
     clearInterval(intervalRef.current);
     setIsPlaying(false);
     setTimeLeft(task.duration);
+    renderEmbed(task.url, false);
   };
 
-  // REWARD LOGIC
+  // 🎁 Handle completion
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
     setIsPlaying(false);
+
     try {
       const res = await api.post(`/tasks/watch/${task._id}/complete`);
       const earned = res?.data?.rewardPoints || task.points || 0;
       const newBalance = res?.data?.newBalance ?? userPoints + earned;
+
       setUserPoints(newBalance);
       socketRef.current.emit("walletUpdate", { userId: user._id, balance: newBalance });
 
@@ -116,41 +108,82 @@ export default function WatchPlayer({
 
       autoNextRef.current = setTimeout(() => {
         goToNextTask?.();
+        setTimeout(() => document.querySelector("button.bg-green-600")?.click(), 1500);
       }, 4000);
     } catch (err) {
       console.error("Error completing watch:", err);
     }
   };
 
-  // EMBED HANDLER
-  const renderEmbed = (url) => {
-    const container = document.getElementById("video-embed-container");
-    if (!container) return;
-    container.innerHTML = ""; // clear old embed
+  // 🌐 Universal Embed Renderer (works on Vercel)
+  const renderEmbed = (url, autoplay = false) => {
+    if (!videoContainerRef.current) return;
+    videoContainerRef.current.innerHTML = "";
 
     try {
+      // 🟣 TikTok
       if (url.includes("tiktok.com")) {
-        const videoId = url.match(/video\/(\d+)/)?.[1];
-        container.innerHTML = `
-          <blockquote class="tiktok-embed" cite="${url}" data-video-id="${videoId}" style="max-width: 605px; min-width: 325px;">
-          </blockquote>`;
-        setTimeout(() => window?.tiktok?.load(), 500);
-      } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
-        container.innerHTML = `
-          <div class="fb-video" data-href="${url}" data-width="500" data-show-text="false"></div>`;
-        setTimeout(() => window?.FB?.XFBML?.parse(), 500);
-      } else if (url.includes("instagram.com")) {
-        const id = url.split("/reel/")[1]?.split("/")[0];
-        container.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/${id}/" data-instgrm-version="14"></blockquote>`;
-        setTimeout(() => window?.instgrm?.Embeds?.process(), 500);
-      } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        const id = url.split("v=")[1] || url.split("/").pop();
-        container.innerHTML = `
-          <iframe width="100%" height="300" src="https://www.youtube.com/embed/${id}?autoplay=0&modestbranding=1&rel=0"
-            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-      } else {
-        container.innerHTML = `<p class="text-red-500 text-center">Unsupported link</p>`;
+        const idMatch = url.match(/video\/(\d+)/);
+        const videoId = idMatch ? idMatch[1] : null;
+        if (videoId) {
+          videoContainerRef.current.innerHTML = `
+            <iframe 
+              src="https://www.tiktok.com/embed/v2/${videoId}"
+              width="100%" height="500" frameborder="0"
+              allow="autoplay; fullscreen; picture-in-picture"
+              style="border-radius:12px;"
+            ></iframe>`;
+        } else {
+          videoContainerRef.current.innerHTML = `<p class='text-red-500'>Invalid TikTok link</p>`;
+        }
+        return;
       }
+
+      // 🔵 Facebook
+      if (url.includes("facebook.com") || url.includes("fb.watch")) {
+        videoContainerRef.current.innerHTML = `
+          <iframe 
+            src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+              url
+            )}&show_text=false&autoplay=${autoplay ? "true" : "false"}"
+            width="100%" height="500" style="border:none;overflow:hidden;border-radius:12px;"
+            scrolling="no" frameborder="0"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            allowfullscreen="true">
+          </iframe>`;
+        return;
+      }
+
+      // 🟢 Instagram
+      if (url.includes("instagram.com")) {
+        const id = url.split("/reel/")[1]?.split("/")[0];
+        videoContainerRef.current.innerHTML = `
+          <iframe 
+            src="https://www.instagram.com/reel/${id}/embed"
+            width="100%" height="500" frameborder="0"
+            allowfullscreen>
+          </iframe>`;
+        return;
+      }
+
+      // 🔴 YouTube
+      if (url.includes("youtube.com") || url.includes("youtu.be")) {
+        const id = url.split("v=")[1] || url.split("/").pop();
+        videoContainerRef.current.innerHTML = `
+          <iframe 
+            width="100%" height="500"
+            src="https://www.youtube.com/embed/${id}?autoplay=${
+              autoplay ? 1 : 0
+            }&modestbranding=1&rel=0"
+            frameborder="0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen>
+          </iframe>`;
+        return;
+      }
+
+      // Default fallback
+      videoContainerRef.current.innerHTML = `<p class="text-red-500 text-center">Unsupported or invalid video link</p>`;
     } catch (err) {
       console.error("Embed render error:", err);
     }
@@ -160,28 +193,31 @@ export default function WatchPlayer({
 
   return (
     <div className="relative border p-4 rounded-lg shadow bg-white space-y-3">
+      {/* 🎥 Video Area */}
       <div
         id="video-embed-container"
-        className="relative w-full min-h-[320px] flex items-center justify-center bg-black rounded-lg overflow-hidden"
-      >
-        <p className="text-white text-center">Loading video...</p>
-      </div>
+        ref={videoContainerRef}
+        className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg bg-black flex items-center justify-center"
+      ></div>
 
+      {/* Overlay play button */}
       {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer">
-          <button
-            onClick={startTimer}
-            className="bg-green-600 text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg hover:bg-green-700"
-          >
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer"
+          onClick={startTimer}
+        >
+          <button className="bg-green-600 text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg hover:bg-green-700">
             ▶ Play to Earn
           </button>
         </div>
       )}
 
+      {/* 🎯 Reward Info */}
       <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
         🎯 Watch this video and earn +{task.points} points!
       </div>
 
+      {/* Reward popup */}
       {showRewardPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50">
           <div className="bg-green-500 text-white text-lg font-bold px-6 py-4 rounded-xl shadow-lg animate-bounce">
@@ -190,8 +226,10 @@ export default function WatchPlayer({
         </div>
       )}
 
+      {/* 🎊 Confetti */}
       {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
 
+      {/* Progress bar */}
       <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
         <div
           className="bg-green-500 h-3 rounded transition-all duration-300"
@@ -199,6 +237,7 @@ export default function WatchPlayer({
         />
       </div>
 
+      {/* Timer + info */}
       <div className="flex justify-between text-sm text-gray-600">
         <span>⏱ {task.duration}s</span>
         <span>🎁 {task.points} pts</span>
@@ -206,6 +245,7 @@ export default function WatchPlayer({
         <span>💰 Total: {userPoints}</span>
       </div>
 
+      {/* Controls */}
       <div className="flex gap-2">
         <button
           onClick={startTimer}
