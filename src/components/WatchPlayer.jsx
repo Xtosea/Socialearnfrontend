@@ -1,3 +1,4 @@
+// src/components/WatchPlayer.jsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import Confetti from "react-confetti";
 import api from "../api/api";
@@ -9,60 +10,94 @@ export default function WatchPlayer({
   refreshTasks,
   userPoints,
   setUserPoints,
-  goToNextTask, // 👈 parent should pass this from PromotedWatchTasks
+  goToNextTask,
 }) {
   const { user } = useContext(AuthContext);
+
+  // 🔁 Refs
   const intervalRef = useRef(null);
   const autoNextRef = useRef(null);
   const audioRef = useRef(null);
-  const iframeRef = useRef(null);
   const cleanupTimeoutsRef = useRef([]);
   const socketRef = useRef(null);
 
+  // 🎮 States
   const [timeLeft, setTimeLeft] = useState(task.duration);
   const [completed, setCompleted] = useState(false);
-  const [rewardFlash, setRewardFlash] = useState(false);
+  const [rewardEarned, setRewardEarned] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showRewardPopup, setShowRewardPopup] = useState(false);
-  const [rewardEarned, setRewardEarned] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showPlayPopup, setShowPlayPopup] = useState(false);
 
-  // 🔌 Connect socket
+  // 🔌 Setup Socket Connection
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000");
-    socketRef.current.emit("joinRoom", user._id);
+    socketRef.current = io(
+      import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"
+    );
 
+    socketRef.current.emit("joinRoom", user._id);
     socketRef.current.on("walletUpdated", ({ userId, balance }) => {
       if (userId === user._id) setUserPoints(balance);
     });
 
-    return () => {
-      socketRef.current.disconnect();
-    };
+    return () => socketRef.current.disconnect();
   }, [user._id, setUserPoints]);
+
+  // 📲 Load Social Media SDKs (TikTok, Instagram, Facebook, Twitter)
+  useEffect(() => {
+    const ensureScript = (id, src) => {
+      if (!document.getElementById(id)) {
+        const script = document.createElement("script");
+        script.id = id;
+        script.src = src;
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    };
+
+    // Load each platform SDK once
+    ensureScript("tiktok-embed", "https://www.tiktok.com/embed.js");
+    ensureScript("instagram-embed", "https://www.instagram.com/embed.js");
+    ensureScript("twitter-wjs", "https://platform.twitter.com/widgets.js");
+
+    // Facebook SDK
+    if (!document.getElementById("facebook-jssdk")) {
+      const fbScript = document.createElement("script");
+      fbScript.id = "facebook-jssdk";
+      fbScript.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0";
+      fbScript.async = true;
+      document.body.appendChild(fbScript);
+    } else {
+      window.FB?.XFBML?.parse();
+    }
+  }, []);
+
+  // 🔁 Refresh embed scripts when task changes
+  useEffect(() => {
+    stopTimer();
+    setTimeLeft(task.duration);
+
+    setTimeout(() => {
+      window.instgrm?.Embeds?.process();
+      window.FB?.XFBML?.parse();
+      window.twttr?.widgets?.load();
+      window.tiktok?.load?.();
+    }, 1000);
+  }, [task]);
 
   // 🧹 Cleanup
   useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (autoNextRef.current) clearTimeout(autoNextRef.current);
-      cleanupTimeoutsRef.current.forEach((t) => clearTimeout(t));
+      clearInterval(intervalRef.current);
+      clearTimeout(autoNextRef.current);
+      cleanupTimeoutsRef.current.forEach(clearTimeout);
     };
   }, []);
 
-  // 🔄 Reset timer when task changes
-  useEffect(() => {
-    stopTimer();
-    setTimeLeft(task.duration);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
-  }, [task]);
-
-  // 🕒 Timer logic
+  // ▶ Start Timer
   const startTimer = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setCompleted(false);
-    setRewardEarned(null);
     setIsPlaying(true);
 
     intervalRef.current = setInterval(() => {
@@ -75,24 +110,20 @@ export default function WatchPlayer({
         return prev - 1;
       });
     }, 1000);
-
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, true);
   };
 
+  // ■ Stop Timer
   const stopTimer = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setTimeLeft(task.duration);
-    setCompleted(false);
+    clearInterval(intervalRef.current);
     setIsPlaying(false);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+    setTimeLeft(task.duration);
   };
 
-  // 🎯 Complete + Reward + Auto-next
+  // 🎯 Handle Completion + Reward
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
     setIsPlaying(false);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
 
     try {
       const res = await api.post(`/tasks/watch/${task._id}/complete`);
@@ -102,105 +133,157 @@ export default function WatchPlayer({
       setUserPoints(newBalance);
       socketRef.current.emit("walletUpdate", { userId: user._id, balance: newBalance });
 
-      // 🎉 Reward visuals
       setRewardEarned(earned);
       setShowRewardPopup(true);
-      setRewardFlash(true);
       setShowConfetti(true);
       audioRef.current?.play();
 
-      const t1 = setTimeout(() => setRewardFlash(false), 2000);
-      const t2 = setTimeout(() => setShowConfetti(false), 3000);
-      const t3 = setTimeout(() => setShowRewardPopup(false), 3500);
-      cleanupTimeoutsRef.current.push(t1, t2, t3);
+      const t1 = setTimeout(() => setShowConfetti(false), 3000);
+      const t2 = setTimeout(() => setShowRewardPopup(false), 3500);
+      cleanupTimeoutsRef.current.push(t1, t2);
 
-      // ✅ Auto next video after popup
       autoNextRef.current = setTimeout(() => {
-        if (goToNextTask) goToNextTask(); // move to next
-        setTimeout(() => {
-          const playBtn = document.querySelector("button.bg-green-600");
-          playBtn?.click();
-        }, 1500);
+        goToNextTask?.();
+        setTimeout(() => document.querySelector("button.bg-green-600")?.click(), 1500);
       }, 4000);
     } catch (err) {
       console.error("Error completing watch:", err);
     }
   };
 
-  // 🌐 Embed builder
-  const getEmbedUrl = (url, autoplay = false) => {
-    let embedUrl = "";
-    try {
-      if (url.includes("youtube.com")) {
-        const id = new URL(url).searchParams.get("v");
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
-      } else if (url.includes("youtu.be")) {
-        const id = url.split("/").pop();
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
-      } else if (url.includes("tiktok.com")) {
-        embedUrl = url.replace("/video/", "/embed/v2/");
-      } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
-        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
-      } else if (url.includes("instagram.com")) {
-        embedUrl = `${url}embed`;
-      } else {
-        embedUrl = url;
-      }
-      if (autoplay) embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
-    } catch {
-      embedUrl = url;
+  // 🌐 Social Media Video Embed Renderer
+  const renderVideoEmbed = (url) => {
+    // ✅ TikTok
+    if (url.includes("tiktok.com")) {
+      const id = url.match(/video\/(\d+)/)?.[1];
+      return (
+        <blockquote
+          className="tiktok-embed absolute top-0 left-0 w-full h-full"
+          cite={url}
+          data-video-id={id}
+        >
+          <section>Loading TikTok...</section>
+        </blockquote>
+      );
     }
-    return embedUrl;
+
+    // ✅ Instagram
+    if (url.includes("instagram.com")) {
+      const id = url.split("/reel/")[1]?.split("/")[0];
+      return (
+        <blockquote
+          className="instagram-media absolute top-0 left-0 w-full h-full"
+          data-instgrm-permalink={`https://www.instagram.com/reel/${id}/`}
+          data-instgrm-version="14"
+        ></blockquote>
+      );
+    }
+
+    // ✅ Facebook
+    if (url.includes("facebook.com") || url.includes("fb.watch")) {
+      return (
+        <div
+          className="fb-video absolute top-0 left-0 w-full h-full"
+          data-href={url}
+          data-width="500"
+          data-show-text="false"
+          data-autoplay={isPlaying ? "true" : "false"}
+        >
+          <blockquote cite={url} className="fb-xfbml-parse-ignore">
+            <a href={url}>View on Facebook</a>
+          </blockquote>
+        </div>
+      );
+    }
+
+    // ✅ Twitter / X
+    if (url.includes("twitter.com") || url.includes("x.com")) {
+      return (
+        <blockquote
+          className="twitter-tweet absolute top-0 left-0 w-full h-full"
+          data-theme="dark"
+        >
+          <a href={url}></a>
+        </blockquote>
+      );
+    }
+
+    // ✅ YouTube
+    if (url.includes("youtube.com") || url.includes("youtu.be")) {
+      const id = url.split("v=")[1] || url.split("/").pop();
+      return (
+        <iframe
+          src={`https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&autoplay=${
+            isPlaying ? 1 : 0
+          }`}
+          className="absolute top-0 left-0 w-full h-full"
+          title="YouTube Video"
+          frameBorder="0"
+          allow="autoplay; fullscreen; encrypted-media"
+          allowFullScreen
+        ></iframe>
+      );
+    }
+
+    // Default Fallback
+    return (
+      <iframe
+        src={url}
+        className="absolute top-0 left-0 w-full h-full"
+        title="Video"
+        frameBorder="0"
+        allow="autoplay; fullscreen; encrypted-media"
+        allowFullScreen
+      ></iframe>
+    );
   };
 
-  const progressPercent = ((task.duration - timeLeft) / task.duration) * 100;
+  const progress = ((task.duration - timeLeft) / task.duration) * 100;
 
   return (
-    <div className="relative border p-4 rounded-lg shadow space-y-3 bg-white">
-      {/* 🎥 Video */}
-<div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
-  <iframe
-    ref={iframeRef}
-    className="absolute top-0 left-0 w-full h-full"
-    src={getEmbedUrl(task.url, false)}
-    title="Reel Player"
-    frameBorder="0"
-    allow="autoplay; fullscreen; encrypted-media"
-    allowFullScreen
-  />
-  {!isPlaying && (
-    <div
-      className="absolute inset-0 cursor-pointer bg-transparent"
-      onClick={() => setShowPlayPopup(true)}
-    />
-  )}
-</div>
+    <div className="relative border p-4 rounded-lg shadow bg-white space-y-3">
+      {/* 🎥 Video Player */}
+      <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg bg-black">
+        {renderVideoEmbed(task.url)}
 
-      {/* 💬 "Watch to earn" text */}
+        {!isPlaying && (
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer"
+            onClick={startTimer}
+          >
+            <button className="bg-green-600 text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg hover:bg-green-700">
+              ▶ Play to Earn
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 🏆 Reward Text */}
       <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
         🎯 Watch this video and earn +{task.points} points!
       </div>
 
-      {/* 🎉 Reward Popup */}
+      {/* 🎁 Reward Popup */}
       {showRewardPopup && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50 pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50">
           <div className="bg-green-500 text-white text-lg font-bold px-6 py-4 rounded-xl shadow-lg animate-bounce">
-            🎉 You earned +{rewardEarned ?? task.points} points for watching this video!
+            🎉 You earned +{rewardEarned ?? task.points} points!
           </div>
         </div>
       )}
 
+      {/* 🎊 Confetti */}
       {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
 
-      {/* 🔋 Progress */}
+      {/* 📊 Progress Bar */}
       <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
         <div
           className="bg-green-500 h-3 rounded transition-all duration-300"
-          style={{ width: `${progressPercent}%` }}
+          style={{ width: `${progress}%` }}
         />
       </div>
 
-      {/* Stats */}
+      {/* 🧾 Timer + Points Info */}
       <div className="flex justify-between text-sm text-gray-600">
         <span>⏱ {task.duration}s</span>
         <span>🎁 {task.points} pts</span>
