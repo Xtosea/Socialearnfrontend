@@ -104,41 +104,7 @@ export default function Dashboard() {
         </header>
 
         {/* ======= Social Action Quick Links ======= */}
-        <section>
-          <h3 className="text-xl font-semibold mb-3">Perform Social Actions</h3>
-          <nav className="flex flex-wrap gap-3 mb-6">
-            <Link
-              to="/action/youtube"
-              className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-            >
-              <FaYoutube /> YouTube
-            </Link>
-            <Link
-              to="/action/facebook"
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-            >
-              <FaFacebook /> Facebook
-            </Link>
-            <Link
-              to="/action/instagram"
-              className="flex items-center gap-2 bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 transition"
-            >
-              <FaInstagram /> Instagram
-            </Link>
-            <Link
-              to="/action/twitter"
-              className="flex items-center gap-2 bg-sky-500 text-white px-4 py-2 rounded hover:bg-sky-600 transition"
-            >
-              <FaTwitter /> Twitter
-            </Link>
-            <Link
-              to="/action/tiktok"
-              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
-            >
-              <FaTiktok /> TikTok
-            </Link>
-          </nav>
-        </section>
+section
 
         {/* ======= Promoted Tasks Section ======= */}
         <section className="mb-8">
