@@ -1,10 +1,23 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Trophy, PlayCircle, Coins, Rocket } from "lucide-react";
+import { Trophy, PlayCircle, Coins } from "lucide-react";
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const ref = queryParams.get("ref");
+
+    // ✅ If there's a referral code, redirect to register page with it
+    if (ref) {
+      navigate(`/register?ref=${ref}`);
+    }
+  }, [location, navigate]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-indigo-50 to-white px-4 py-10">
       <div className="max-w-2xl w-full">
@@ -28,11 +41,11 @@ export default function HomePage() {
 
             <div className="bg-indigo-50 p-4 rounded-xl shadow-sm text-center">
               <p className="text-indigo-700 font-medium leading-relaxed">
-                🚀 As a content creator, boost your social media videos now such as YouTube, TikTok, 
-                Facebook, Instagram and Twitter with real views—
+                🚀 As a content creator, boost your social media videos now such as
+                YouTube, TikTok, Facebook, Instagram and Twitter with real views —
                 for free! Let your videos go viral and build your fanbase while earning
-                rewards along the way. Get real engagements on your videos such as subscriptions, 
-                comments, followers and share all free.
+                rewards along the way. Get real engagements on your videos such as
+                subscriptions, comments, followers, and shares — all free.
               </p>
             </div>
 
