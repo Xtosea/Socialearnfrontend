@@ -1,90 +1,93 @@
-import React, { useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Trophy, PlayCircle, Coins } from "lucide-react";
 
-export default function HomePage() {
-  const navigate = useNavigate();
+export default function Register() {
   const location = useLocation();
+  const [referral, setReferral] = useState("");
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const ref = queryParams.get("ref");
+    if (ref) setReferral(ref);
+  }, [location]);
 
-    // ✅ Redirect visitors to /register if referral exists
-    if (ref) {
-      navigate(`/register?ref=${ref}`);
-    }
-  }, [location, navigate]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // TODO: Connect backend API here
+    alert(`Registered successfully with referral: ${referral || "None"}`);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-indigo-50 to-white px-4 py-10">
-      <div className="max-w-2xl w-full">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-white px-4 py-10">
+      <div className="max-w-md w-full">
         <Card className="shadow-lg border-none rounded-2xl bg-white/80 backdrop-blur-md">
           <CardHeader className="text-center space-y-2">
-            <h1 className="text-3xl font-extrabold text-indigo-700 tracking-tight">
-              Welcome to <span className="text-indigo-500">Social-Earn 🎉</span>
-            </h1>
-            <p className="text-gray-600 text-lg">
-              Turn your time and engagement into real rewards.
-            </p>
+            <h1 className="text-2xl font-bold text-indigo-700">Create an Account</h1>
+            <p className="text-gray-600">Join and start earning today!</p>
           </CardHeader>
 
-          <CardContent className="space-y-6 text-center">
-            <p className="text-gray-700 leading-relaxed">
-              <strong>Social-Earn</strong> is your gateway to earning points while doing
-              what you love — watching videos, completing fun challenges, and engaging
-              with trending content. Climb the leaderboard, unlock achievements,
-              and grow your reward wallet every day!
-            </p>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {referral && (
+                <div>
+                  <label className="text-sm text-gray-700">Referral Code</label>
+                  <input
+                    type="text"
+                    value={referral}
+                    readOnly
+                    className="border p-2 rounded w-full bg-gray-100 text-gray-700"
+                  />
+                </div>
+              )}
 
-            <div className="bg-indigo-50 p-4 rounded-xl shadow-sm text-center">
-              <p className="text-indigo-700 font-medium leading-relaxed">
-                🚀 Are you a content creator on YouTube, TikTok, Facebook, Instagram or Twitter?
-                Promote your videos and engagements, go viral, and become famous — 
-                all while earning points for views, likes, comments, followers, and shares!
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
-              <div className="flex flex-col items-center">
-                <PlayCircle className="w-8 h-8 text-indigo-500 mb-2" />
-                <h3 className="font-semibold text-gray-800">Watch & Earn</h3>
-                <p className="text-sm text-gray-500">
-                  Earn instant points for watching trending videos.
-                </p>
+              <div>
+                <label className="text-sm text-gray-700">Username</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter username"
+                  className="border p-2 rounded w-full"
+                />
               </div>
 
-              <div className="flex flex-col items-center">
-                <Coins className="w-8 h-8 text-yellow-500 mb-2" />
-                <h3 className="font-semibold text-gray-800">Complete Tasks</h3>
-                <p className="text-sm text-gray-500">
-                  Boost your points by completing social challenges.
-                </p>
+              <div>
+                <label className="text-sm text-gray-700">Email</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="Enter email"
+                  className="border p-2 rounded w-full"
+                />
               </div>
 
-              <div className="flex flex-col items-center">
-                <Trophy className="w-8 h-8 text-indigo-600 mb-2" />
-                <h3 className="font-semibold text-gray-800">Climb the Ranks</h3>
-                <p className="text-sm text-gray-500">
-                  Compete and show up on the global leaderboard.
-                </p>
+              <div>
+                <label className="text-sm text-gray-700">Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Create password"
+                  className="border p-2 rounded w-full"
+                />
               </div>
-            </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded"
+              >
+                Register
+              </Button>
+            </form>
           </CardContent>
 
-          <CardFooter className="flex justify-center gap-4 mt-4">
-            <Link to="/register">
-              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
-                Get Started
-              </Button>
-            </Link>
-            <Link to="/login">
-              <Button variant="outline" size="lg">
+          <CardFooter className="text-center">
+            <p className="text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link to="/login" className="text-indigo-600 font-medium">
                 Login
-              </Button>
-            </Link>
+              </Link>
+            </p>
           </CardFooter>
         </Card>
       </div>
