@@ -1,205 +1,93 @@
-import React, { useState, useContext, useRef, useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import { countriesPart1 } from "../data/countriesPart1";
-import { countriesPart2 } from "../data/countriesPart2";
-import { countriesPart3 } from "../data/countriesPart3";
-import { countriesPart4 } from "../data/countriesPart4";
-import { countriesPart5 } from "../data/countriesPart5";
+import React, { useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Trophy, PlayCircle, Coins } from "lucide-react";
 
-const countries = [
-  { code: "", name: "Select country" },
-  ...countriesPart1,
-  ...countriesPart2,
-  ...countriesPart3,
-  ...countriesPart4,
-  ...countriesPart5,
-];
+export default function HomePage() {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-export default function Register() {
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-    country: "",
-    referralCode: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [searchParams] = useSearchParams();
-
-  const { register } = useContext(AuthContext);
-  const nav = useNavigate();
-  const dropdownRef = useRef();
-
-  // ✅ Prefill referralCode from URL if present
   useEffect(() => {
-    const refFromUrl = searchParams.get("ref");
-    if (refFromUrl) {
-      setForm((prev) => ({ ...prev, referralCode: refFromUrl }));
+    const queryParams = new URLSearchParams(location.search);
+    const ref = queryParams.get("ref");
+
+    // ✅ Redirect visitors to /register if referral exists
+    if (ref) {
+      navigate(`/register?ref=${ref}`);
     }
-  }, [searchParams]);
-
-  // ✅ Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const submit = async (e) => {
-    e.preventDefault();
-
-    if (!form.country) {
-      alert("Please select a country");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await register(form);
-      nav("/dashboard"); // ✅ go to Dashboard after register
-    } catch (err) {
-      alert(err.response?.data?.message || "Register failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const referralLocked = !!searchParams.get("ref"); // ✅ lock if from URL
+  }, [location, navigate]);
 
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
-      <h2 className="text-2xl mb-6 text-center font-bold text-gray-800">
-        Register
-      </h2>
-      <form onSubmit={submit} className="space-y-4">
-        <input
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          placeholder="Username"
-          value={form.username}
-          onChange={(e) => setForm({ ...form, username: e.target.value })}
-          required
-        />
-        <input
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          placeholder="Email"
-          type="email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          required
-        />
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium hover:text-gray-700"
-          >
-            {showPassword ? "Hide" : "Show"}
-          </button>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-indigo-50 to-white px-4 py-10">
+      <div className="max-w-2xl w-full">
+        <Card className="shadow-lg border-none rounded-2xl bg-white/80 backdrop-blur-md">
+          <CardHeader className="text-center space-y-2">
+            <h1 className="text-3xl font-extrabold text-indigo-700 tracking-tight">
+              Welcome to <span className="text-indigo-500">Social-Earn 🎉</span>
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Turn your time and engagement into real rewards.
+            </p>
+          </CardHeader>
 
-        {/* Country Dropdown (no typing) */}
-        <div className="relative" ref={dropdownRef}>
-          <div
-            className={`w-full p-3 border rounded-lg cursor-pointer ${
-              form.country ? "border-gray-300" : "border-red-400"
-            }`}
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            {form.country
-              ? countries.find((c) => c.code === form.country)?.name
-              : "Select country"}
-          </div>
-          {dropdownOpen && (
-            <ul className="absolute z-20 w-full max-h-52 overflow-y-auto bg-white border border-gray-300 rounded-lg mt-1 shadow-lg">
-              {countries.map((c) => (
-                <li
-                  key={c.code}
-                  className="p-3 hover:bg-blue-100 cursor-pointer transition-colors"
-                  onClick={() => {
-                    setForm({ ...form, country: c.code });
-                    setDropdownOpen(false);
-                  }}
-                >
-                  {c.name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+          <CardContent className="space-y-6 text-center">
+            <p className="text-gray-700 leading-relaxed">
+              <strong>Social-Earn</strong> is your gateway to earning points while doing
+              what you love — watching videos, completing fun challenges, and engaging
+              with trending content. Climb the leaderboard, unlock achievements,
+              and grow your reward wallet every day!
+            </p>
 
-        {/* Referral Code Input */}
-        <input
-          className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-            referralLocked ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
-          }`}
-          placeholder="Referral Code (optional)"
-          value={form.referralCode}
-          onChange={(e) =>
-            !referralLocked && setForm({ ...form, referralCode: e.target.value })
-          }
-          readOnly={referralLocked}
-        />
+            <div className="bg-indigo-50 p-4 rounded-xl shadow-sm text-center">
+              <p className="text-indigo-700 font-medium leading-relaxed">
+                🚀 Are you a content creator on YouTube, TikTok, Facebook, Instagram or Twitter?
+                Promote your videos and engagements, go viral, and become famous — 
+                all while earning points for views, likes, comments, followers, and shares!
+              </p>
+            </div>
 
-        <button
-          type="submit"
-          className={`w-full p-3 rounded-lg text-white font-semibold flex justify-center items-center gap-2 transition-colors ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8H4z"
-                ></path>
-              </svg>
-              Registering...
-            </>
-          ) : (
-            "Register"
-          )}
-        </button>
-      </form>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
+              <div className="flex flex-col items-center">
+                <PlayCircle className="w-8 h-8 text-indigo-500 mb-2" />
+                <h3 className="font-semibold text-gray-800">Watch & Earn</h3>
+                <p className="text-sm text-gray-500">
+                  Earn instant points for watching trending videos.
+                </p>
+              </div>
 
-      <p className="text-center text-sm mt-4 text-gray-600">
-        Already registered?{" "}
-        <Link to="/login" className="text-blue-600 font-medium hover:underline">
-          Login here
-        </Link>
-      </p>
+              <div className="flex flex-col items-center">
+                <Coins className="w-8 h-8 text-yellow-500 mb-2" />
+                <h3 className="font-semibold text-gray-800">Complete Tasks</h3>
+                <p className="text-sm text-gray-500">
+                  Boost your points by completing social challenges.
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <Trophy className="w-8 h-8 text-indigo-600 mb-2" />
+                <h3 className="font-semibold text-gray-800">Climb the Ranks</h3>
+                <p className="text-sm text-gray-500">
+                  Compete and show up on the global leaderboard.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex justify-center gap-4 mt-4">
+            <Link to="/register">
+              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
+                Get Started
+              </Button>
+            </Link>
+            <Link to="/login">
+              <Button variant="outline" size="lg">
+                Login
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
