@@ -1,96 +1,205 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
-import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import React, { useState, useContext, useRef, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { countriesPart1 } from "../data/countriesPart1";
+import { countriesPart2 } from "../data/countriesPart2";
+import { countriesPart3 } from "../data/countriesPart3";
+import { countriesPart4 } from "../data/countriesPart4";
+import { countriesPart5 } from "../data/countriesPart5";
+
+const countries = [
+  { code: "", name: "Select country" },
+  ...countriesPart1,
+  ...countriesPart2,
+  ...countriesPart3,
+  ...countriesPart4,
+  ...countriesPart5,
+];
 
 export default function Register() {
-  const location = useLocation();
-  const [referral, setReferral] = useState("");
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    country: "",
+    referralCode: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchParams] = useSearchParams();
 
+  const { register } = useContext(AuthContext);
+  const nav = useNavigate();
+  const dropdownRef = useRef();
+
+  // ✅ Prefill referralCode from URL if present
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const ref = queryParams.get("ref");
-    if (ref) setReferral(ref);
-  }, [location]);
+    const refFromUrl = searchParams.get("ref");
+    if (refFromUrl) {
+      setForm((prev) => ({ ...prev, referralCode: refFromUrl }));
+    }
+  }, [searchParams]);
 
-  const handleSubmit = (e) => {
+  // ✅ Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const submit = async (e) => {
     e.preventDefault();
-    // TODO: Connect backend API here
-    alert(`Registered successfully with referral: ${referral || "None"}`);
+
+    if (!form.country) {
+      alert("Please select a country");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await register(form);
+      nav("/dashboard"); // ✅ go to Dashboard after register
+    } catch (err) {
+      alert(err.response?.data?.message || "Register failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const referralLocked = !!searchParams.get("ref"); // ✅ lock if from URL
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-white px-4 py-10">
-      <div className="max-w-md w-full">
-        <Card className="shadow-lg border-none rounded-2xl bg-white/80 backdrop-blur-md">
-          <CardHeader className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-indigo-700">Create an Account</h1>
-            <p className="text-gray-600">Join and start earning today!</p>
-          </CardHeader>
+    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
+      <h2 className="text-2xl mb-6 text-center font-bold text-gray-800">
+        Register
+      </h2>
+      <form onSubmit={submit} className="space-y-4">
+        <input
+          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Username"
+          value={form.username}
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
+          required
+        />
+        <input
+          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Email"
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          required
+        />
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium hover:text-gray-700"
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
 
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {referral && (
-                <div>
-                  <label className="text-sm text-gray-700">Referral Code</label>
-                  <input
-                    type="text"
-                    value={referral}
-                    readOnly
-                    className="border p-2 rounded w-full bg-gray-100 text-gray-700"
-                  />
-                </div>
-              )}
+        {/* Country Dropdown (no typing) */}
+        <div className="relative" ref={dropdownRef}>
+          <div
+            className={`w-full p-3 border rounded-lg cursor-pointer ${
+              form.country ? "border-gray-300" : "border-red-400"
+            }`}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          >
+            {form.country
+              ? countries.find((c) => c.code === form.country)?.name
+              : "Select country"}
+          </div>
+          {dropdownOpen && (
+            <ul className="absolute z-20 w-full max-h-52 overflow-y-auto bg-white border border-gray-300 rounded-lg mt-1 shadow-lg">
+              {countries.map((c) => (
+                <li
+                  key={c.code}
+                  className="p-3 hover:bg-blue-100 cursor-pointer transition-colors"
+                  onClick={() => {
+                    setForm({ ...form, country: c.code });
+                    setDropdownOpen(false);
+                  }}
+                >
+                  {c.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-              <div>
-                <label className="text-sm text-gray-700">Username</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter username"
-                  className="border p-2 rounded w-full"
-                />
-              </div>
+        {/* Referral Code Input */}
+        <input
+          className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+            referralLocked ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
+          }`}
+          placeholder="Referral Code (optional)"
+          value={form.referralCode}
+          onChange={(e) =>
+            !referralLocked && setForm({ ...form, referralCode: e.target.value })
+          }
+          readOnly={referralLocked}
+        />
 
-              <div>
-                <label className="text-sm text-gray-700">Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="Enter email"
-                  className="border p-2 rounded w-full"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-700">Password</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Create password"
-                  className="border p-2 rounded w-full"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded"
+        <button
+          type="submit"
+          className={`w-full p-3 rounded-lg text-white font-semibold flex justify-center items-center gap-2 transition-colors ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
               >
-                Register
-              </Button>
-            </form>
-          </CardContent>
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                ></path>
+              </svg>
+              Registering...
+            </>
+          ) : (
+            "Register"
+          )}
+        </button>
+      </form>
 
-          <CardFooter className="text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link to="/login" className="text-indigo-600 font-medium">
-                Login
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
-      </div>
+      <p className="text-center text-sm mt-4 text-gray-600">
+        Already registered?{" "}
+        <Link to="/login" className="text-blue-600 font-medium hover:underline">
+          Login here
+        </Link>
+      </p>
     </div>
   );
 }
