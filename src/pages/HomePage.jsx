@@ -4,6 +4,11 @@ import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/card
 import { Button } from "../components/ui/button";
 import { Trophy, PlayCircle, Coins } from "lucide-react";
 
+// 🪙 Ad Components
+import AdUnit from "../components/ads/AdUnit";
+import MidAd from "../components/ads/MidAd";
+import FooterAd from "../components/ads/FooterAd";
+
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,15 +17,19 @@ export default function HomePage() {
     const queryParams = new URLSearchParams(location.search);
     const ref = queryParams.get("ref");
 
-    // ✅ If there's a referral code, redirect to register page with it
+    // ✅ Redirect if referral code exists
     if (ref) {
       navigate(`/register?ref=${ref}`);
     }
   }, [location, navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-indigo-50 to-white px-4 py-10">
-      <div className="max-w-2xl w-full">
+    <div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-indigo-50 to-white px-4 py-10">
+      <div className="max-w-3xl w-full space-y-10">
+        {/* 🔝 Top Ad */}
+        <AdUnit />
+
+        {/* 🔷 Welcome Card */}
         <Card className="shadow-lg border-none rounded-2xl bg-white/80 backdrop-blur-md">
           <CardHeader className="text-center space-y-2">
             <h1 className="text-3xl font-extrabold text-indigo-700 tracking-tight">
@@ -42,12 +51,15 @@ export default function HomePage() {
             <div className="bg-indigo-50 p-4 rounded-xl shadow-sm text-center">
               <p className="text-indigo-700 font-medium leading-relaxed">
                 🚀 As a content creator, boost your social media videos now such as
-                YouTube, TikTok, Facebook, Instagram and Twitter with real views —
+                YouTube, TikTok, Facebook, Instagram, and Twitter with real views —
                 for free! Let your videos go viral and build your fanbase while earning
                 rewards along the way. Get real engagements on your videos such as
                 subscriptions, comments, followers, and shares — all free.
               </p>
             </div>
+
+            {/* 💠 Mid Ad inside content */}
+            <MidAd />
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
               <div className="flex flex-col items-center">
@@ -89,6 +101,14 @@ export default function HomePage() {
             </Link>
           </CardFooter>
         </Card>
+
+        {/* 🧾 Footer Text */}
+        <p className="text-gray-500 text-center my-8">
+          Keep earning points by engaging with videos!
+        </p>
+
+        {/* 🔻 Footer Ad */}
+        <FooterAd />
       </div>
     </div>
   );
