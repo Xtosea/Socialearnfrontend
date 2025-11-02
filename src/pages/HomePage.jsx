@@ -89,11 +89,18 @@ export default function HomePage() {
           </CardContent>
 
           <CardFooter className="flex justify-center gap-4 mt-4">
-            <Link to="/register">
+            {/* ✅ Register button now uses your referral link */}
+            <a
+              href="https://www.trendwatch.i.ng/register?ref=6dd893"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
-                Get Started
+                Register Now!
               </Button>
-            </Link>
+            </a>
+
+            {/* ✅ Login button links to /login page */}
             <Link to="/login">
               <Button variant="outline" size="lg">
                 Login
