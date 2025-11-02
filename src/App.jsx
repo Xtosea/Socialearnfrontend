@@ -1,5 +1,6 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import WebApp from "@twa-dev/sdk"; // 👈 Telegram Mini App SDK
 
 // 🧩 Pages
 import HomePage from "./pages/HomePage";
@@ -13,7 +14,6 @@ import History from "./pages/History";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import AdminPanel from "./pages/AdminPanel";
 import ProfileEditor from "./components/ProfileEditor";
-// import ResetPassword from "./pages/ResetPassword";
 
 // 🎥 Watch tasks
 import WatchYouTube from "./pages/tasks/watch/WatchYouTube";
@@ -50,75 +50,99 @@ function RequireAuth({ children }) {
 }
 
 // ====================================================
-// 🚀 App Router
+// 🚀 App Router + Telegram Mini App Initialization
 // ====================================================
 export default function App() {
+  useEffect(() => {
+    // ✅ Initialize Telegram Mini App if opened inside Telegram
+    if (window.Telegram?.WebApp) {
+      WebApp.ready();
+      console.log("✅ Telegram Mini App initialized!");
+      console.log("Telegram WebApp data:", WebApp.initDataUnsafe);
+
+      // Optional — set theme color to match Telegram
+      document.body.style.backgroundColor =
+        WebApp.themeParams.bg_color || "#ffffff";
+    }
+  }, []);
+
   return (
-    <Routes>
-      {/* ======================== */}
-      {/* 🌍 Public Routes */}
-      {/* ======================== */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      {/* keep public ResetPassword route if added later */}
-      {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
+    <>
+      {/* 👋 Greeting visible only if Telegram user is detected */}
+      {WebApp.initDataUnsafe?.user && (
+        <div style={{ textAlign: "center", marginTop: "10px" }}>
+          <p>
+            👋 Hello, <strong>{WebApp.initDataUnsafe.user.first_name}</strong>!
+            Welcome to SocialEarn 🚀
+          </p>
+        </div>
+      )}
 
-      {/* ======================== */}
-      {/* 🔐 Protected Routes (User Only) */}
-      {/* ======================== */}
-      <Route
-        element={
-          <RequireAuth>
-            <Layout />
-          </RequireAuth>
-        }
-      >
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/wallet" element={<Wallet />} />
-        <Route path="/history" element={<History />} />
-        <Route path="/edit-profile" element={<ProfileEditor />} />
+      <Routes>
+        {/* ======================== */}
+        {/* 🌍 Public Routes */}
+        {/* ======================== */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
 
-        {/* 🎥 Watch Tasks */}
-        <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />
-        <Route path="/tasks/watch/tiktok" element={<WatchTikTok />} />
-        <Route path="/tasks/watch/facebook" element={<WatchFacebook />} />
-        <Route path="/tasks/watch/instagram" element={<WatchInstagram />} />
-        <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />
-
-        {/* ❤️ Action Tasks */}
-        <Route path="/tasks/follow" element={<FollowForm />} />
-        <Route path="/tasks/like" element={<LikeForm />} />
-        <Route path="/tasks/comment" element={<CommentForm />} />
-        <Route path="/tasks/share" element={<ShareForm />} />
-
-        {/* 📢 Promoted & Submissions */}
+        {/* ======================== */}
+        {/* 🔐 Protected Routes */}
+        {/* ======================== */}
         <Route
-          path="/promoted/watch/:platform"
-          element={<PromotedTasks type="watch" />}
-        />
-        <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
-        <Route path="/action/:platform" element={<ActionPage />} />
-
-        {/* 🧑‍💼 Admin Panel (auth + role check inside AdminRoute) */}
-        <Route
-          path="/admin"
           element={
-            <AdminRoute>
-              <AdminPanel />
-            </AdminRoute>
+            <RequireAuth>
+              <Layout />
+            </RequireAuth>
           }
-        />
-      </Route>
+        >
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/edit-profile" element={<ProfileEditor />} />
 
-      {/* ======================== */}
-      {/* 🌐 Public Routes with Layout (optional) */}
-      {/* ======================== */}
-      <Route element={<Layout />}>
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-      </Route>
-    </Routes>
+          {/* 🎥 Watch Tasks */}
+          <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />
+          <Route path="/tasks/watch/tiktok" element={<WatchTikTok />} />
+          <Route path="/tasks/watch/facebook" element={<WatchFacebook />} />
+          <Route path="/tasks/watch/instagram" element={<WatchInstagram />} />
+          <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />
+
+          {/* ❤️ Action Tasks */}
+          <Route path="/tasks/follow" element={<FollowForm />} />
+          <Route path="/tasks/like" element={<LikeForm />} />
+          <Route path="/tasks/comment" element={<CommentForm />} />
+          <Route path="/tasks/share" element={<ShareForm />} />
+
+          {/* 📢 Promoted & Submissions */}
+          <Route
+            path="/promoted/watch/:platform"
+            element={<PromotedTasks type="watch" />}
+          />
+          <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
+          <Route path="/action/:platform" element={<ActionPage />} />
+
+          {/* 🧑‍💼 Admin Panel */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPanel />
+              </AdminRoute>
+            }
+          />
+        </Route>
+
+        {/* ======================== */}
+        {/* 🌐 Public Routes with Layout */}
+        {/* ======================== */}
+        <Route element={<Layout />}>
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
