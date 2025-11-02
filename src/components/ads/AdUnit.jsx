@@ -1,34 +1,35 @@
-import React, { useEffect } from "react";
-import useResponsiveAd from "../../hooks/useResponsiveAd";
+import React, { useEffect, useState } from "react";
 
 export default function AdUnit() {
-  const config = useResponsiveAd(
-    { key: "5dd79e016b91a978c50bcc1be731c6ce", width: 300, height: 250 }, // desktop
-    { key: "5dd79e016b91a978c50bcc1be731c6ce", width: 300, height: 100 }  // mobile
-  );
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const container = document.getElementById("top-ad-container");
-    if (!container) return;
-
     const script = document.createElement("script");
-    script.type = "text/javascript";
+    script.src = "https://www.highperformanceformat.com/5dd79e016b91a978c50bcc1be731c6ce/invoke.js";
     script.async = true;
-    script.src = `//www.highperformanceformat.com/${config.key}/invoke.js`;
+    script.type = "text/javascript";
 
-    window.atOptions = {
-      key: config.key,
-      format: "iframe",
-      height: config.height,
-      width: config.width,
-      params: {},
+    const container = document.getElementById("ad-container-top");
+    if (container) {
+      container.innerHTML = "";
+      container.appendChild(script);
+    }
+
+    // Simulate a short delay while ad loads
+    const timer = setTimeout(() => setLoading(false), 1500);
+
+    return () => {
+      clearTimeout(timer);
+      container && (container.innerHTML = "");
     };
-
-    container.innerHTML = "";
-    container.appendChild(script);
-  }, [config]);
+  }, []);
 
   return (
-    <div id="top-ad-container" className="flex justify-center my-3"></div>
+    <div className="flex justify-center my-6">
+      {loading && (
+        <div className="text-sm text-gray-400 italic animate-pulse">Ad loading...</div>
+      )}
+      <div id="ad-container-top" style={{ width: 300, height: 250 }} />
+    </div>
   );
 }
