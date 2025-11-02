@@ -101,11 +101,13 @@ export default function HomePage() {
             </a>
 
             {/* ✅ Login button links to /login page */}
-            <Link to="/login">
-              <Button variant="outline" size="lg">
-                Login
-              </Button>
-            </Link>
+            <Button
+  variant="outline"
+  size="lg"
+  onClick={() => navigate("/login")}
+>
+  Login
+</Button>
           </CardFooter>
         </Card>
 
