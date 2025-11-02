@@ -1,34 +1,34 @@
-import React, { useEffect } from "react";
-import useResponsiveAd from "../../hooks/useResponsiveAd";
+import React, { useEffect, useState } from "react";
 
 export default function MidAd() {
-  const config = useResponsiveAd(
-    { key: "5dd79e016b91a978c50bcc1be731c6ce", width: 300, height: 250 },
-    { key: "5dd79e016b91a978c50bcc1be731c6ce", width: 320, height: 100 }
-  );
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const container = document.getElementById("mid-ad-container");
-    if (!container) return;
-
     const script = document.createElement("script");
-    script.type = "text/javascript";
+    script.src = "https://www.highperformanceformat.com/c6fd50be7643199d4f3002349ecba370/invoke.js";
     script.async = true;
-    script.src = `//www.highperformanceformat.com/${config.key}/invoke.js`;
+    script.type = "text/javascript";
 
-    window.atOptions = {
-      key: config.key,
-      format: "iframe",
-      height: config.height,
-      width: config.width,
-      params: {},
+    const container = document.getElementById("ad-container-mid");
+    if (container) {
+      container.innerHTML = "";
+      container.appendChild(script);
+    }
+
+    const timer = setTimeout(() => setLoading(false), 1500);
+
+    return () => {
+      clearTimeout(timer);
+      container && (container.innerHTML = "");
     };
-
-    container.innerHTML = "";
-    container.appendChild(script);
-  }, [config]);
+  }, []);
 
   return (
-    <div id="mid-ad-container" className="flex justify-center my-4"></div>
+    <div className="flex justify-center my-8">
+      {loading && (
+        <div className="text-sm text-gray-400 italic animate-pulse">Ad loading...</div>
+      )}
+      <div id="ad-container-mid" style={{ width: 468, height: 60 }} />
+    </div>
   );
 }
