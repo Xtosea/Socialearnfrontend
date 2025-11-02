@@ -1,34 +1,34 @@
-import React, { useEffect } from "react";
-import useResponsiveAd from "../../hooks/useResponsiveAd";
+import React, { useEffect, useState } from "react";
 
 export default function FooterAd() {
-  const config = useResponsiveAd(
-    { key: "c6fd50be7643199d4f3002349ecba370", width: 468, height: 60 },
-    { key: "c6fd50be7643199d4f3002349ecba370", width: 320, height: 50 }
-  );
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const container = document.getElementById("footer-ad-container");
-    if (!container) return;
-
     const script = document.createElement("script");
-    script.type = "text/javascript";
+    script.src = "https://pl26071070.effectivegatecpm.com/fb8c864dfb96577ecffd5e8a331e05a3/invoke.js";
     script.async = true;
-    script.src = `//www.highperformanceformat.com/${config.key}/invoke.js`;
+    script.setAttribute("data-cfasync", "false");
 
-    window.atOptions = {
-      key: config.key,
-      format: "iframe",
-      height: config.height,
-      width: config.width,
-      params: {},
+    const container = document.getElementById("ad-container-footer");
+    if (container) {
+      container.innerHTML = "";
+      container.appendChild(script);
+    }
+
+    const timer = setTimeout(() => setLoading(false), 1500);
+
+    return () => {
+      clearTimeout(timer);
+      container && (container.innerHTML = "");
     };
-
-    container.innerHTML = "";
-    container.appendChild(script);
-  }, [config]);
+  }, []);
 
   return (
-    <div id="footer-ad-container" className="flex justify-center my-6"></div>
+    <div className="flex justify-center my-8">
+      {loading && (
+        <div className="text-sm text-gray-400 italic animate-pulse">Ad loading...</div>
+      )}
+      <div id="ad-container-footer" />
+    </div>
   );
 }
