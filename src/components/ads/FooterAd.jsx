@@ -1,34 +1,33 @@
-import React, { useEffect, useState } from "react";
+// 📁 components/ads/AdUnit.js
+import React, { useEffect } from "react";
 
-export default function FooterAd() {
-  const [loading, setLoading] = useState(true);
-
+export default function AdUnit() {
   useEffect(() => {
+    // Remove old ads if re-rendered
+    const existing = document.querySelectorAll("[data-sdk='show_10133110']");
+    existing.forEach(el => el.remove());
+
+    // Recreate the ad script
     const script = document.createElement("script");
-    script.src = "https://pl26071070.effectivegatecpm.com/fb8c864dfb96577ecffd5e8a331e05a3/invoke.js";
+    script.src = "//libtl.com/sdk.js";
+    script.setAttribute("data-zone", "10133110");
+    script.setAttribute("data-sdk", "show_10133110");
     script.async = true;
-    script.setAttribute("data-cfasync", "false");
 
-    const container = document.getElementById("ad-container-footer");
-    if (container) {
-      container.innerHTML = "";
-      container.appendChild(script);
-    }
-
-    const timer = setTimeout(() => setLoading(false), 1500);
+    document.body.appendChild(script);
 
     return () => {
-      clearTimeout(timer);
-      container && (container.innerHTML = "");
+      // Cleanup when component unmounts
+      script.remove();
     };
   }, []);
 
   return (
-    <div className="flex justify-center my-8">
-      {loading && (
-        <div className="text-sm text-gray-400 italic animate-pulse">Ad loading...</div>
-      )}
-      <div id="ad-container-footer" />
+    <div
+      id="ad-container-top"
+      className="my-6 w-full text-center border border-gray-100 rounded-lg p-2"
+    >
+      <p className="text-sm text-gray-400">Advertisement</p>
     </div>
   );
 }
