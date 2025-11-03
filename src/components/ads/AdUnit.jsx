@@ -1,35 +1,33 @@
-import React, { useEffect, useState } from "react";
+// 📁 components/ads/AdUnit.js
+import React, { useEffect } from "react";
 
 export default function AdUnit() {
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
+    // Remove old ads if re-rendered
+    const existing = document.querySelectorAll("[data-sdk='show_10133110']");
+    existing.forEach(el => el.remove());
+
+    // Recreate the ad script
     const script = document.createElement("script");
-    script.src = "https://www.highperformanceformat.com/5dd79e016b91a978c50bcc1be731c6ce/invoke.js";
+    script.src = "//libtl.com/sdk.js";
+    script.setAttribute("data-zone", "10133110");
+    script.setAttribute("data-sdk", "show_10133110");
     script.async = true;
-    script.type = "text/javascript";
 
-    const container = document.getElementById("ad-container-top");
-    if (container) {
-      container.innerHTML = "";
-      container.appendChild(script);
-    }
-
-    // Simulate a short delay while ad loads
-    const timer = setTimeout(() => setLoading(false), 1500);
+    document.body.appendChild(script);
 
     return () => {
-      clearTimeout(timer);
-      container && (container.innerHTML = "");
+      // Cleanup when component unmounts
+      script.remove();
     };
   }, []);
 
   return (
-    <div className="flex justify-center my-6">
-      {loading && (
-        <div className="text-sm text-gray-400 italic animate-pulse">Ad loading...</div>
-      )}
-      <div id="ad-container-top" style={{ width: 300, height: 250 }} />
+    <div
+      id="ad-container-top"
+      className="my-6 w-full text-center border border-gray-100 rounded-lg p-2"
+    >
+      <p className="text-sm text-gray-400">Advertisement</p>
     </div>
   );
 }
