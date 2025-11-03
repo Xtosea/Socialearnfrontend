@@ -43,9 +43,6 @@ import ActionPage from "./pages/promoted/ActionPage";
 // 💸 Monetag Push Ads Integration
 import registerMonetagServiceWorker from "./components/ads/MonetagRegister";
 
-// ℹ️ Informational Components
-import AboutSection from "./components/ads/AboutSection";
-import WhyChooseUs from "./components/ads/WhyChooseUs";
 
 // ====================================================
 // 🔒 Protect routes (for logged-in users only)
@@ -136,9 +133,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* 📄 Static Info Sections */}
-      <AboutSection />
-      <WhyChooseUs />
     </>
   );
 }
