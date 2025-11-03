@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // 🧩 Pages
@@ -40,6 +40,13 @@ import PromotedTasks from "./pages/PromotedTasks";
 import WatchTaskFormWrapper from "./pages/tasks/WatchTaskFormWrapper";
 import ActionPage from "./pages/promoted/ActionPage";
 
+// 💸 Monetag Push Ads Integration
+import registerMonetagServiceWorker from "./components/ads/MonetagRegister";
+
+// ℹ️ Informational Components
+import AboutSection from "./components/ads/AboutSection";
+import WhyChooseUs from "./components/ads/WhyChooseUs";
+
 // ====================================================
 // 🔒 Protect routes (for logged-in users only)
 // ====================================================
@@ -53,6 +60,11 @@ function RequireAuth({ children }) {
 // 🚀 App Router
 // ====================================================
 export default function App() {
+  // ✅ Register Monetag Push Ads
+  useEffect(() => {
+    registerMonetagServiceWorker();
+  }, []);
+
   return (
     <>
       <Routes>
@@ -63,11 +75,10 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        {/* Keep ResetPassword route if added later */}
         {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
 
         {/* ======================== */}
-        {/* 🔐 Protected Routes (User Only) */}
+        {/* 🔐 Protected Routes */}
         {/* ======================== */}
         <Route
           element={
@@ -115,15 +126,19 @@ export default function App() {
         </Route>
 
         {/* ======================== */}
-        {/* 🌐 Public Routes with Layout (optional) */}
+        {/* 🌐 Public Routes with Layout */}
         {/* ======================== */}
         <Route element={<Layout />}>
           <Route path="/leaderboard" element={<LeaderboardPage />} />
         </Route>
 
-        {/* 🚫 Catch-all (redirect unknown URLs) */}
+        {/* 🚫 Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* 📄 Static Info Sections */}
+      <AboutSection />
+      <WhyChooseUs />
     </>
   );
 }
