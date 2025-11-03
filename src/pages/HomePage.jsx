@@ -21,7 +21,7 @@ import AboutSection from "../components/ads/AboutSection";
 import HeroBanner from "../components/HeroBanner";
 import GrowSection from "../components/GrowSection";
 import Footer from "../components/Footer";
-
+import MonetagBanner from "../components/ads/MonetagBanner";
 import MonetagSmartTag from "../components/ads/MonetagSmartTag";
 
 export default function HomePage() {
