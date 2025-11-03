@@ -1,5 +1,6 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import WebApp from "@twa-dev/sdk"; // ✅ Telegram Mini App SDK
 
 // 🧩 Pages
 import HomePage from "./pages/HomePage";
@@ -44,102 +45,92 @@ import ActionPage from "./pages/promoted/ActionPage";
 // 🔒 Protect routes (for logged-in users only)
 // ====================================================
 function RequireAuth({ children }) {
-const { user } = useContext(AuthContext);
-if (!user) return <Navigate to="/login" replace />;
-return children;
+  const { user } = useContext(AuthContext);
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
 }
 
 // ====================================================
-// 🚀 App Router
+// 🚀 App Component
 // ====================================================
 export default function App() {
-return (
-<Routes>
-{/* ======================== /}
-{/ 🌍 Public Routes /}
-{/ ======================== /}
-<Route path="/" element={<HomePage />} />
-<Route path="/login" element={<Login />} />
-<Route path="/register" element={<Register />} />
-<Route path="/forgot-password" element={<ForgotPassword />} />
-{/ keep public ResetPassword route if added later /}
-{/ <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
+  useEffect(() => {
+    // Initialize Telegram Mini App
+    if (window.Telegram?.WebApp) {
+      WebApp.ready();
+      console.log("✅ Telegram WebApp initialized");
+      console.log("Telegram user data:", WebApp.initDataUnsafe);
+    }
+  }, []);
 
-{/* ======================== */}  
-  {/* 🔐 Protected Routes (User Only) */}  
-  {/* ======================== */}  
-  <Route  
-    element={  
-      <RequireAuth>  
-        <Layout />  
-      </RequireAuth>  
-    }  
-  >  
-    <Route path="/dashboard" element={<Dashboard />} />  
-    <Route path="/profile" element={<Profile />} />  
-    <Route path="/wallet" element={<Wallet />} />  
-    <Route path="/history" element={<History />} />  
-    <Route path="/edit-profile" element={<ProfileEditor />} />  
+  return (
+    <>
+      {/* 👋 Optional greeting if Telegram user detected */}
+      {WebApp.initDataUnsafe?.user && (
+        <div style={{ textAlign: "center", margin: "10px" }}>
+          Hello {WebApp.initDataUnsafe.user.first_name} 👋
+        </div>
+      )}
 
-    {/* 🎥 Watch Tasks */}  
-    <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />  
-    <Route path="/tasks/watch/tiktok" element={<WatchTikTok />} />  
-    <Route path="/tasks/watch/facebook" element={<WatchFacebook />} />  
-    <Route path="/tasks/watch/instagram" element={<WatchInstagram />} />  
-    <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />  
+      <Routes>
+        {/* 🌍 Public Routes */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
 
-    {/* ❤️ Action Tasks */}  
-    <Route path="/tasks/follow" element={<FollowForm />} />  
-    <Route path="/tasks/like" element={<LikeForm />} />  
-    <Route path="/tasks/comment" element={<CommentForm />} />  
-    <Route path="/tasks/share" element={<ShareForm />} />  
+        {/* 🔐 Protected Routes */}
+        <Route
+          element={
+            <RequireAuth>
+              <Layout />
+            </RequireAuth>
+          }
+        >
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/edit-profile" element={<ProfileEditor />} />
 
-    {/* 📢 Promoted & Submissions */}  
-    <Route  
-      path="/promoted/watch/:platform"  
-      element={<PromotedTasks type="watch" />}  
-    />  
-    <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />  
-    <Route path="/action/:platform" element={<ActionPage />} />  
+          {/* 🎥 Watch Tasks */}
+          <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />
+          <Route path="/tasks/watch/tiktok" element={<WatchTikTok />} />
+          <Route path="/tasks/watch/facebook" element={<WatchFacebook />} />
+          <Route path="/tasks/watch/instagram" element={<WatchInstagram />} />
+          <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />
 
-    {/* 🧑‍💼 Admin Panel (auth + role check inside AdminRoute) */}  
-    <Route  
-      path="/admin"  
-      element={  
-        <AdminRoute>  
-          <AdminPanel />  
-        </AdminRoute>  
-      }  
-    />  
-  </Route>  
+          {/* ❤️ Action Tasks */}
+          <Route path="/tasks/follow" element={<FollowForm />} />
+          <Route path="/tasks/like" element={<LikeForm />} />
+          <Route path="/tasks/comment" element={<CommentForm />} />
+          <Route path="/tasks/share" element={<ShareForm />} />
 
-  {/* ======================== */}  
-  {/* 🌐 Public Routes with Layout (optional) */}  
-  {/* ======================== */}  
-  <Route element={<Layout />}>  
-    <Route path="/leaderboard" element={<LeaderboardPage />} />  
-  </Route>  
-</Routes>
+          {/* 📢 Promoted & Submissions */}
+          <Route
+            path="/promoted/watch/:platform"
+            element={<PromotedTasks type="watch" />}
+          />
+          <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
+          <Route path="/action/:platform" element={<ActionPage />} />
 
-);
+          {/* 🧑‍💼 Admin Panel */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPanel />
+              </AdminRoute>
+            }
+          />
+        </Route>
+
+        {/* 🌐 Public Routes with Layout */}
+        <Route element={<Layout />}>
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+        </Route>
+      </Routes>
+    </>
+  );
 }
-
-import { useEffect } from "react";
-import WebApp from "@twa-dev/sdk";
-
-function App() {
-useEffect(() => {
-WebApp.ready(); // Initialize the Mini App
-console.log("Telegram WebApp data:", WebApp.initDataUnsafe);
-}, []);
-
-return (
-<div>
-<h1>Welcome to SocialEarn</h1>
-<p>Hello {WebApp.initDataUnsafe?.user?.first_name || "Guest"} 👋</p>
-</div>
-);
-}
-
-export default App;
-
