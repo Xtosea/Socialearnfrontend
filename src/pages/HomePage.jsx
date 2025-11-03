@@ -21,6 +21,8 @@ import AboutSection from "../components/ads/AboutSection";
 import HeroBanner from "../components/HeroBanner";
 import GrowSection from "../components/GrowSection";
 import Footer from "../components/Footer";
+import React from "react";
+import MonetagSmartTag from "../components/ads/MonetagSmartTag";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -194,6 +196,11 @@ export default function HomePage() {
           <FooterAd />
         </div>
       </div>
+     
+    
+      {/* your homepage content */}
+      <MonetagSmartTag /> {/* 🪙 show ad only here */}
+    
 
       {/* 🌐 Main Site Footer */}
       <Footer />
