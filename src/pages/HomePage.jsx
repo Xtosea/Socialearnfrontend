@@ -198,8 +198,9 @@ export default function HomePage() {
       </div>
      
     
-      {/* your homepage content */}
-      <MonetagSmartTag /> {/* 🪙 show ad only here */}
+      <div className="fixed bottom-0 left-0 w-full z-50">
+  <MonetagSmartTag />
+</div>
     
 
       {/* 🌐 Main Site Footer */}
