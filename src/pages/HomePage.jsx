@@ -40,6 +40,7 @@ export default function HomePage() {
 
   return (
     <>
+     <Header />
     {/* 🔝 Monetag Banner Ad */}
 <MonetagBanner zoneId="10135767" />
       {/* 🌟 Hero Section */}
