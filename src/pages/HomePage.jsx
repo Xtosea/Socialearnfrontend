@@ -23,7 +23,7 @@ import GrowSection from "../components/GrowSection";
 import Footer from "../components/Footer";
 import MonetagBanner from "../components/ads/MonetagBanner";
 import MonetagSmartTag from "../components/ads/MonetagSmartTag";
-import Header from "../components/Header";
+
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,7 +40,6 @@ export default function HomePage() {
 
   return (
     <>
-     <Header />
     {/* 🔝 Monetag Banner Ad */}
 <MonetagBanner zoneId="10135767" />
       {/* 🌟 Hero Section */}
@@ -61,7 +60,7 @@ export default function HomePage() {
               <h1 className="text-3xl font-extrabold text-indigo-700 tracking-tight">
                 Welcome to{" "}
                 <span className="text-indigo-500">
-                  Social Video Entertainments 🎉
+                  Social Video Engagement 🎉
                 </span>
               </h1>
               <p className="text-gray-600 text-lg">
@@ -71,12 +70,7 @@ export default function HomePage() {
 
             <CardContent className="space-y-8 text-center">
               {/* 📝 Main Intro */}
-              <p className="text-gray-700 leading-relaxed">
-                <strong>Social-Earn</strong> is your gateway to earning points while doing
-                what you love — watching videos, completing fun challenges, and engaging
-                with trending content. Climb the leaderboard, unlock achievements, and grow
-                your reward wallet every day!
-              </p>
+              
 
               {/* 💠 Feature Highlight */}
               <div className="bg-indigo-50 p-4 rounded-xl shadow-sm text-center">
