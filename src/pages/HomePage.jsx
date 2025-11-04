@@ -23,7 +23,7 @@ import GrowSection from "../components/GrowSection";
 import Footer from "../components/Footer";
 import MonetagBanner from "../components/ads/MonetagBanner";
 import MonetagSmartTag from "../components/ads/MonetagSmartTag";
-
+import Header from "../components/Header";
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
