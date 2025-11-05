@@ -105,7 +105,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 text-indigo-600">
                   <Sparkles className="w-6 h-6" />
                   <h2 className="text-xl font-bold">
-                    Grow Your Social Media Engagements — Completely Free!
+                    Join Our Community Today— Completely Free! You Don't Pay A Dime To Boost Rour Reach 
                   </h2>
                 </div>
 
@@ -126,14 +126,14 @@ export default function HomePage() {
                   </li>
                   <li>
                     <strong>Invite friends</strong> with your referral link to earn even
-                    more free points.
+                    more free coins.
                   </li>
                   <li>
                     <strong>Connect & grow</strong> — follow one another for stronger, more
                     real engagements.
                   </li>
                   <li>
-                    <strong>Convert points to real money</strong> anytime, easily.
+                    <strong>Convert coins to real money</strong> anytime, easily.
                   </li>
                   <li>
                     <strong>Compete on the leaderboard</strong> and win extra rewards for
@@ -153,7 +153,7 @@ export default function HomePage() {
                   <PlayCircle className="w-8 h-8 text-indigo-500 mb-2" />
                   <h3 className="font-semibold text-gray-800">Watch & Earn</h3>
                   <p className="text-sm text-gray-500">
-                    Earn instant points for watching trending videos.
+                    Earn instant coins for watching trending videos.
                   </p>
                 </div>
 
@@ -195,7 +195,7 @@ export default function HomePage() {
           </Card>
 
           <p className="text-gray-500 text-center my-8">
-            Keep earning points by engaging with videos!
+            Keep earning coins by engaging with videos!
           </p>
 
           <FooterAd />
