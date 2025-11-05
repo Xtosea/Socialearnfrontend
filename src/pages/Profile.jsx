@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Copy, CheckCircle, Globe, Users } from "lucide-react";
+import { Copy, CheckCircle, Globe, Users, Camera } from "lucide-react";
 
 export default function Profile() {
   const { user, setUser, updateProfile } = useContext(AuthContext);
@@ -12,6 +12,8 @@ export default function Profile() {
   const [password, setPassword] = useState("");
   const [toast, setToast] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [profilePic, setProfilePic] = useState("");
+  const [preview, setPreview] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -19,6 +21,7 @@ export default function Profile() {
       setBio(user.bio || "");
       setDob(user.dob || "");
       setCountry(user.country || "");
+      setProfilePic(user.profilePicture || ""); // existing profile photo if any
     }
   }, [user]);
 
@@ -36,10 +39,22 @@ export default function Profile() {
     setTimeout(() => setToast(null), 2500);
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+      setProfilePic(file); // store file for upload
+    }
+  };
+
   const handleSave = async () => {
     try {
       const updatedFields = { email, bio, dob, country };
       if (password) updatedFields.password = password;
+      if (profilePic && profilePic instanceof File) {
+        updatedFields.profilePicture = profilePic; // send to backend later
+      }
+
       const updatedUser = await updateProfile(updatedFields);
       setUser(updatedUser);
       setEditing(false);
@@ -63,12 +78,42 @@ export default function Profile() {
         </div>
       )}
 
-      {/* User Info Card */}
-      <div className="bg-white rounded-xl shadow p-5 mb-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+      {/* Profile Picture */}
+      <div className="flex flex-col items-center mb-6">
+        <div className="relative">
+          <img
+            src={
+              preview
+                ? preview
+                : user.profilePicture ||
+                  "https://via.placeholder.com/120x120.png?text=Profile"
+            }
+            alt="Profile"
+            className="w-28 h-28 rounded-full object-cover border shadow"
+          />
+          {editing && (
+            <label
+              htmlFor="profileUpload"
+              className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700"
+            >
+              <Camera className="w-4 h-4" />
+              <input
+                type="file"
+                id="profileUpload"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+        <h2 className="text-lg font-semibold text-gray-700 mt-3">
           @{user.username}
         </h2>
+      </div>
 
+      {/* User Info Card */}
+      <div className="bg-white rounded-xl shadow p-5 mb-6">
         <div className="space-y-2 text-gray-700">
           <p>
             <Globe className="inline w-4 h-4 mr-2 text-blue-500" />
@@ -86,7 +131,7 @@ export default function Profile() {
           </p>
         </div>
 
-        {/* Referral Link Section */}
+        {/* Referral Link */}
         <div className="mt-4 bg-gray-50 p-3 rounded-lg">
           <p className="text-sm text-gray-600 mb-2 font-medium">
             Invite friends and earn rewards
@@ -109,7 +154,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Editable Profile Details */}
+      {/* Editable Details */}
       <div className="bg-white rounded-xl shadow p-5">
         <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Details</h3>
         <div className="space-y-4">
@@ -189,6 +234,7 @@ export default function Profile() {
                   setDob(user.dob || "");
                   setCountry(user.country || "");
                   setPassword("");
+                  setPreview("");
                 }}
                 className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
               >
