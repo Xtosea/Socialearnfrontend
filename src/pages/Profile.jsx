@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Copy, CheckCircle, Globe, Users } from "lucide-react";
-import GoBackButton from "../components/GoBackButton";
 
 export default function Profile() {
   const { user, setUser, updateProfile } = useContext(AuthContext);
@@ -52,7 +51,6 @@ export default function Profile() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <GoBackButton />
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Profile</h1>
 
       {toast && (
