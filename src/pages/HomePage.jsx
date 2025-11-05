@@ -79,9 +79,7 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 💠 Mid Ad inside content */}
-              <MidAd />
-
+              
               {/* ✨ Grow Engagement Section */}
               <div className="text-left space-y-4 bg-white rounded-xl p-5 shadow-sm border">
                 <div className="flex items-center gap-2 text-indigo-600">
@@ -95,11 +93,11 @@ export default function HomePage() {
                   <li>
                     <strong>Register easily</strong> with just a username and password and
                     get{" "}
-                    <span className="font-semibold text-indigo-600">300 free points</span>{" "}
+                    <span className="font-semibold text-indigo-600">300 free coins</span>{" "}
                     instantly to start promoting.
                   </li>
                   <li>
-                    <strong>Promote your social media pages, vidios and Engagements</strong> only just by pasting your YouTube,
+                    <strong>Promote your social media pages, vidios and engagements</strong> only just by pasting your YouTube,
                     TikTok, Instagram, or Facebook video URLs right in the promotion form input easily. Choose how many video views and engagements you want yourself all for free.
                   </li>
                   <li>
@@ -147,7 +145,7 @@ export default function HomePage() {
                   <Coins className="w-8 h-8 text-yellow-500 mb-2" />
                   <h3 className="font-semibold text-gray-800">Complete Tasks</h3>
                   <p className="text-sm text-gray-500">
-                    Boost your points by completing social tasks and challenges.
+                    Boost your coins by completing social tasks and challenges.
                   </p>
                 </div>
 
@@ -172,6 +170,9 @@ export default function HomePage() {
                   Register Now!
                 </Button>
               </a>
+
+              {/* 💠 Mid Ad inside content */}
+              <MidAd />
 
               {/* ✅ Login button now works properly */}
               <Button variant="outline" size="lg" onClick={() => navigate("/login")}>
