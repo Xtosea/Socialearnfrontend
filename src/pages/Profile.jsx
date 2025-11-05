@@ -50,7 +50,6 @@ export default function Profile() {
     setPreview(URL.createObjectURL(file));
     setUploading(true);
 
-    // Upload to Cloudinary
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
@@ -64,7 +63,12 @@ export default function Profile() {
 
       if (data.secure_url) {
         setProfilePic(data.secure_url);
-        showToast("success", "Profile picture uploaded!");
+
+        // Automatically update profile after successful upload
+        const updatedUser = await updateProfile({ profilePicture: data.secure_url });
+        setUser(updatedUser);
+
+        showToast("success", "Profile picture updated successfully!");
       } else {
         showToast("error", "Image upload failed.");
       }
@@ -91,8 +95,8 @@ export default function Profile() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Profile</h1>
+    <div className="p-8 max-w-4xl mx-auto bg-white rounded-2xl shadow-md">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">My Profile</h1>
 
       {toast && (
         <div
@@ -115,23 +119,21 @@ export default function Profile() {
                   "https://via.placeholder.com/120x120.png?text=Profile"
             }
             alt="Profile"
-            className="w-28 h-28 rounded-full object-cover border shadow"
+            className="w-32 h-32 rounded-full object-cover border-4 border-blue-200 shadow-md"
           />
-          {editing && (
-            <label
-              htmlFor="profileUpload"
-              className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700"
-            >
-              <Camera className="w-4 h-4" />
-              <input
-                type="file"
-                id="profileUpload"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-            </label>
-          )}
+          <label
+            htmlFor="profileUpload"
+            className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700"
+          >
+            <Camera className="w-4 h-4" />
+            <input
+              type="file"
+              id="profileUpload"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </label>
         </div>
         {uploading && (
           <p className="text-sm text-blue-600 mt-2 animate-pulse">
@@ -143,10 +145,99 @@ export default function Profile() {
         </h2>
       </div>
 
-      {/* Other profile sections remain exactly the same (bio, country, referral, etc.) */}
+      {/* Profile Form */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-semibold mb-1">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded-lg p-2"
+            disabled={!editing}
+          />
+        </div>
 
-      {/* Editable Details */}
-      {/* ... same as your code above ... */}
+        <div>
+          <label className="block text-sm font-semibold mb-1">Date of Birth</label>
+          <input
+            type="date"
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            className="w-full border rounded-lg p-2"
+            disabled={!editing}
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-semibold mb-1">Bio</label>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            className="w-full border rounded-lg p-2"
+            rows="3"
+            disabled={!editing}
+          ></textarea>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1">Country</label>
+          <input
+            type="text"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="w-full border rounded-lg p-2"
+            disabled={!editing}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1">New Password</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border rounded-lg p-2"
+            disabled={!editing}
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-between mt-8">
+        <button
+          onClick={() => setEditing(!editing)}
+          className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
+        >
+          {editing ? "Cancel" : "Edit Profile"}
+        </button>
+
+        {editing && (
+          <button
+            onClick={handleSave}
+            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            Save Changes
+          </button>
+        )}
+      </div>
+
+      {/* Referral Link Section */}
+      <div className="mt-10 p-4 bg-gray-50 rounded-lg border flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-500">Your referral link</p>
+          <p className="font-semibold text-blue-700 text-sm break-all">
+            {`${window.location.origin}/register?ref=${user.referralCode}`}
+          </p>
+        </div>
+        <button
+          onClick={handleCopyReferral}
+          className="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+        >
+          {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
     </div>
   );
 }
