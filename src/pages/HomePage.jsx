@@ -58,13 +58,13 @@ export default function HomePage() {
           <Card className="shadow-lg border-none rounded-2xl bg-white/80 backdrop-blur-md">
             <CardHeader className="text-center space-y-2">
               <h1 className="text-3xl font-extrabold text-indigo-700 tracking-tight">
-                Welcome to{" "}
+                {" "}
                 <span className="text-indigo-500">
-                  Social Video Engagement 🎉
+                  
                 </span>
               </h1>
               <p className="text-gray-600 text-lg">
-                Turn your time and engagement into real rewards.
+                
               </p>
             </CardHeader>
 
@@ -75,11 +75,7 @@ export default function HomePage() {
               {/* 💠 Feature Highlight */}
               <div className="bg-indigo-50 p-4 rounded-xl shadow-sm text-center">
                 <p className="text-indigo-700 font-medium leading-relaxed">
-                  🚀 As a content creator, boost your social media videos now such as
-                  YouTube, TikTok, Facebook, Instagram, and Twitter with real views — for
-                  free! Let your videos go viral and build your fanbase while earning
-                  rewards along the way. Get real engagements like subscriptions, comments,
-                  followers, and shares — all free.
+
                 </p>
               </div>
 
@@ -103,8 +99,8 @@ export default function HomePage() {
                     instantly to start promoting.
                   </li>
                   <li>
-                    <strong>Promote videos or pages</strong> by pasting your YouTube,
-                    TikTok, Instagram, or Facebook link in the promotion input.
+                    <strong>Promote your social media pages, vidios and Engagements</strong> only just by pasting your YouTube,
+                    TikTok, Instagram, or Facebook video URLs right in the promotion form input easily. Choose how many video views and engagements you want yourself all for free.
                   </li>
                   <li>
                     <strong>Engage with others</strong> — like, follow, comment, or share
