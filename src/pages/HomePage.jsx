@@ -58,14 +58,13 @@ export default function HomePage() {
           <Card className="shadow-lg border-none rounded-2xl bg-white/80 backdrop-blur-md">
             <CardHeader className="text-center space-y-2">
               <h1 className="text-3xl font-extrabold text-indigo-700 tracking-tight">
-                {" "}
-                <span className="text-indigo-500">
-                  
-                </span>
-              </h1>
-              <p className="text-gray-600 text-lg">
                 
-              </p>
+                
+         {/* 💠 Mid Ad inside content */}
+              <MidAd />
+
+       
+              
             </CardHeader>
 
             <CardContent className="space-y-8 text-center">
