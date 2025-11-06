@@ -1,4 +1,4 @@
-// src/components/WatchPlayer.jsx
+// ✅ src/components/WatchPlayer.jsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import Confetti from "react-confetti";
 import api from "../api/api";
@@ -13,23 +13,24 @@ export default function WatchPlayer({
   goToNextTask,
 }) {
   const { user } = useContext(AuthContext);
-  const iframeRef = useRef(null);
+  const videoRef = useRef(null);
   const intervalRef = useRef(null);
   const autoNextRef = useRef(null);
-  const cleanupTimeoutsRef = useRef([]);
   const audioRef = useRef(null);
+  const cleanupTimeoutsRef = useRef([]);
   const socketRef = useRef(null);
 
   const [timeLeft, setTimeLeft] = useState(task.duration);
   const [completed, setCompleted] = useState(false);
-  const [rewardEarned, setRewardEarned] = useState(null);
-  const [showRewardPopup, setShowRewardPopup] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
   const [rewardFlash, setRewardFlash] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showRewardPopup, setShowRewardPopup] = useState(false);
+  const [rewardEarned, setRewardEarned] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayPopup, setShowPlayPopup] = useState(false);
+  const [showNativePlayWarning, setShowNativePlayWarning] = useState(false);
 
-  // 🎧 Connect socket
+  // 🔌 Connect socket
   useEffect(() => {
     socketRef.current = io(
       import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"
@@ -45,7 +46,7 @@ export default function WatchPlayer({
     };
   }, [user._id, setUserPoints]);
 
-  // 🧹 Cleanup intervals
+  // 🧹 Cleanup timers
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -54,80 +55,74 @@ export default function WatchPlayer({
     };
   }, []);
 
-  // 🔄 Reset when new task loads
+  // 🔄 Reset when task changes
   useEffect(() => {
     stopTimer();
     setTimeLeft(task.duration);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+    setCompleted(false);
+    setIsPlaying(false);
+    if (videoRef.current) videoRef.current.load();
   }, [task]);
 
-  // 🌐 Build embed URLs for each platform
-  const getEmbedUrl = (url, autoplay = false) => {
-    try {
-      let embedUrl = "";
-      if (url.includes("youtube.com")) {
-        const id = new URL(url).searchParams.get("v");
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
-      } else if (url.includes("youtu.be")) {
-        const id = url.split("/").pop();
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
-      } else if (url.includes("tiktok.com")) {
-        embedUrl = url.replace("/video/", "/embed/v2/");
-      } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
-        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
-          url
-        )}&show_text=false&controls=0`;
-      } else if (url.includes("instagram.com")) {
-        embedUrl = `${url}embed`;
-      } else {
-        embedUrl = url;
+  // 🧠 Detect native play attempts
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const handleNativePlay = () => {
+      if (!isPlaying) {
+        video.pause();
+        setShowNativePlayWarning(true);
       }
-      if (autoplay) embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
-      return embedUrl;
-    } catch {
-      return url;
+    };
+    video.addEventListener("play", handleNativePlay);
+    return () => video.removeEventListener("play", handleNativePlay);
+  }, [isPlaying]);
+
+  // 🎮 Custom Play
+  const startTimer = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    try {
+      await video.play();
+      setIsPlaying(true);
+      setCompleted(false);
+      setRewardEarned(null);
+      setShowNativePlayWarning(false);
+
+      if (intervalRef.current) clearInterval(intervalRef.current);
+
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current);
+            handleCompleteWatch();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      console.error("Playback error:", err);
+      alert("Unable to start video. Please tap the Play button again.");
     }
   };
 
-  // 🕒 Start timer & play
-  const startTimer = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setCompleted(false);
-    setIsPlaying(true);
-    setRewardEarned(null);
-
-    // Force iframe reload with autoplay
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, true);
-
-    // Start countdown
-    intervalRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          handleCompleteWatch();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  // 🛑 Stop timer & pause video
   const stopTimer = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setTimeLeft(task.duration);
+    const video = videoRef.current;
+    if (video) video.pause();
     setIsPlaying(false);
-    setCompleted(false);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+    setTimeLeft(task.duration);
   };
 
-  // ✅ Complete watching
+  // 🎯 Complete + Reward + Auto-next
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
     setIsPlaying(false);
-
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+    const video = videoRef.current;
+    if (video) video.pause();
 
     try {
       const res = await api.post(`/tasks/watch/${task._id}/complete`);
@@ -150,10 +145,6 @@ export default function WatchPlayer({
 
       autoNextRef.current = setTimeout(() => {
         if (goToNextTask) goToNextTask();
-        setTimeout(() => {
-          const playBtn = document.querySelector("button.bg-green-600");
-          playBtn?.click();
-        }, 1500);
       }, 4000);
     } catch (err) {
       console.error("Error completing watch:", err);
@@ -162,28 +153,19 @@ export default function WatchPlayer({
 
   const progressPercent = ((task.duration - timeLeft) / task.duration) * 100;
 
-  // Auto hide play-popup
-  useEffect(() => {
-    if (showPlayPopup) {
-      const timeout = setTimeout(() => setShowPlayPopup(false), 3000);
-      return () => clearTimeout(timeout);
-    }
-  }, [showPlayPopup]);
-
   return (
     <div className="relative border p-4 rounded-lg shadow space-y-3 bg-white">
-      {/* 🎥 Video */}
-      <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
-        <iframe
-          ref={iframeRef}
-          className="absolute top-0 left-0 w-full h-full"
-          src={getEmbedUrl(task.url, false)}
-          title="Reel Player"
-          frameBorder="0"
-          allow="autoplay; fullscreen; encrypted-media"
-          allowFullScreen
+      {/* 🎥 Video Player */}
+      <div className="relative w-full overflow-hidden rounded-lg">
+        <video
+          ref={videoRef}
+          src={task.videoUrl || task.url}
+          className="w-full rounded-lg"
+          onEnded={handleCompleteWatch}
+          controls={false}
         />
-        {/* Transparent overlay blocks direct play attempts */}
+
+        {/* Transparent blocker for native controls */}
         {!isPlaying && (
           <div
             className="absolute inset-0 cursor-pointer bg-transparent"
@@ -191,6 +173,13 @@ export default function WatchPlayer({
           />
         )}
       </div>
+
+      {/* ⚠️ Warning if native play clicked */}
+      {showNativePlayWarning && (
+        <div className="text-red-600 text-sm text-center font-semibold mt-2">
+          ⚠️ Please use the green “Play” button below to start watching.
+        </div>
+      )}
 
       {/* 💬 Info */}
       <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
@@ -205,10 +194,7 @@ export default function WatchPlayer({
           </div>
         </div>
       )}
-
-      {showConfetti && (
-        <Confetti width={window.innerWidth} height={window.innerHeight} />
-      )}
+      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
 
       {/* 🔋 Progress Bar */}
       <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
@@ -218,16 +204,16 @@ export default function WatchPlayer({
         />
       </div>
 
-      {/* 📊 Stats */}
+      {/* ⏱ Stats */}
       <div className="flex justify-between text-sm text-gray-600">
         <span>⏱ {task.duration}s</span>
         <span>🎁 {task.points} pts</span>
         <span>🕒 {timeLeft}s left</span>
-        <span>💰 {userPoints}</span>
+        <span>💰 Total: {userPoints}</span>
       </div>
 
-      {/* 🎮 Custom Controls */}
-      <div className="flex gap-2">
+      {/* 🎮 Custom Buttons */}
+      <div className="flex gap-2 justify-center">
         <button
           onClick={startTimer}
           disabled={isPlaying}
@@ -245,15 +231,15 @@ export default function WatchPlayer({
         </button>
       </div>
 
-      {/* 💬 Popup */}
+      {/* 💬 Popup telling user to use custom button */}
       {showPlayPopup && (
         <div
           onClick={() => setShowPlayPopup(false)}
-          className="absolute inset-0 flex items-center justify-center bg-black/50 z-50 backdrop-blur-sm animate-fadeIn"
+          className="absolute inset-0 flex items-center justify-center bg-black/50 z-50 backdrop-blur-sm"
         >
-          <div className="bg-white/95 text-gray-900 px-6 py-4 rounded-2xl shadow-2xl text-center max-w-xs transform scale-100 animate-slideUp transition-all duration-300">
+          <div className="bg-white/95 text-gray-900 px-6 py-4 rounded-2xl shadow-2xl text-center max-w-xs">
             <p className="font-semibold text-lg mb-2">🎬 Use the Custom Play Button</p>
-            <p className="text-sm text-gray-700 leading-snug">
+            <p className="text-sm text-gray-700">
               Please tap the green <strong>▶ Play</strong> button below to start watching
               and earn your reward.
             </p>
