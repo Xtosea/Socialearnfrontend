@@ -1,3 +1,4 @@
+// src/components/WatchPlayer.jsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import Confetti from "react-confetti";
 import api from "../api/api";
@@ -9,7 +10,7 @@ export default function WatchPlayer({
   refreshTasks,
   userPoints,
   setUserPoints,
-  goToNextTask, // 👈 parent should pass this from PromotedWatchTasks
+  goToNextTask,
 }) {
   const { user } = useContext(AuthContext);
   const intervalRef = useRef(null);
@@ -30,7 +31,9 @@ export default function WatchPlayer({
 
   // 🔌 Connect socket
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000");
+    socketRef.current = io(
+      import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"
+    );
     socketRef.current.emit("joinRoom", user._id);
 
     socketRef.current.on("walletUpdated", ({ userId, balance }) => {
@@ -116,7 +119,7 @@ export default function WatchPlayer({
 
       // ✅ Auto next video after popup
       autoNextRef.current = setTimeout(() => {
-        if (goToNextTask) goToNextTask(); // move to next
+        if (goToNextTask) goToNextTask();
         setTimeout(() => {
           const playBtn = document.querySelector("button.bg-green-600");
           playBtn?.click();
@@ -140,13 +143,16 @@ export default function WatchPlayer({
       } else if (url.includes("tiktok.com")) {
         embedUrl = url.replace("/video/", "/embed/v2/");
       } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
-        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
+        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+          url
+        )}&show_text=false`;
       } else if (url.includes("instagram.com")) {
         embedUrl = `${url}embed`;
       } else {
         embedUrl = url;
       }
-      if (autoplay) embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
+      if (autoplay)
+        embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
     } catch {
       embedUrl = url;
     }
@@ -155,28 +161,36 @@ export default function WatchPlayer({
 
   const progressPercent = ((task.duration - timeLeft) / task.duration) * 100;
 
+  // Auto hide play-popup after 3s
+  useEffect(() => {
+    if (showPlayPopup) {
+      const timeout = setTimeout(() => setShowPlayPopup(false), 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [showPlayPopup]);
+
   return (
     <div className="relative border p-4 rounded-lg shadow space-y-3 bg-white">
       {/* 🎥 Video */}
-<div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
-  <iframe
-    ref={iframeRef}
-    className="absolute top-0 left-0 w-full h-full"
-    src={getEmbedUrl(task.url, false)}
-    title="Reel Player"
-    frameBorder="0"
-    allow="autoplay; fullscreen; encrypted-media"
-    allowFullScreen
-  />
-  {!isPlaying && (
-    <div
-      className="absolute inset-0 cursor-pointer bg-transparent"
-      onClick={() => setShowPlayPopup(true)}
-    />
-  )}
-</div>
+      <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
+        <iframe
+          ref={iframeRef}
+          className="absolute top-0 left-0 w-full h-full"
+          src={getEmbedUrl(task.url, false)}
+          title="Reel Player"
+          frameBorder="0"
+          allow="autoplay; fullscreen; encrypted-media"
+          allowFullScreen
+        />
+        {!isPlaying && (
+          <div
+            className="absolute inset-0 cursor-pointer bg-transparent"
+            onClick={() => setShowPlayPopup(true)}
+          />
+        )}
+      </div>
 
-      {/* 💬 "Watch to earn" text */}
+      {/* 💬 Watch & Earn info */}
       <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
         🎯 Watch this video and earn +{task.points} points!
       </div>
@@ -190,7 +204,9 @@ export default function WatchPlayer({
         </div>
       )}
 
-      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
+      {showConfetti && (
+        <Confetti width={window.innerWidth} height={window.innerHeight} />
+      )}
 
       {/* 🔋 Progress */}
       <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
@@ -226,6 +242,30 @@ export default function WatchPlayer({
           ■ Stop
         </button>
       </div>
+
+      {/* 💬 Custom instruction popup (smooth fade) */}
+      {showPlayPopup && (
+        <div
+          onClick={() => setShowPlayPopup(false)}
+          className="absolute inset-0 flex items-center justify-center bg-black/50 z-50 backdrop-blur-sm animate-fadeIn"
+        >
+          <div className="bg-white/95 text-gray-900 px-6 py-4 rounded-2xl shadow-2xl text-center max-w-xs transform scale-100 animate-slideUp transition-all duration-300">
+            <p className="font-semibold text-lg mb-2">
+              🎬 Use the Custom Play Button
+            </p>
+            <p className="text-sm text-gray-700 leading-snug">
+              Please tap the green <strong>▶ Play</strong> button below to start watching
+              and earn your reward.
+            </p>
+            <button
+              onClick={() => setShowPlayPopup(false)}
+              className="mt-3 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-full shadow-md transition"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       <audio ref={audioRef} src="/sounds/reward-sound.mp3" preload="auto" />
     </div>
