@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Copy, CheckCircle, Globe, Users, Camera } from "lucide-react";
+import GoBackButton from "../components/GoBackButton";
 
 export default function Profile() {
   const { user, setUser, updateProfile } = useContext(AuthContext);
@@ -19,6 +20,7 @@ export default function Profile() {
   const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
+  // ===== Load user data =====
   useEffect(() => {
     if (user) {
       setEmail(user.email || "");
@@ -31,6 +33,7 @@ export default function Profile() {
 
   if (!user) return <div>Loading profile...</div>;
 
+  // ===== Copy referral link =====
   const handleCopyReferral = () => {
     const refLink = `${window.location.origin}/register?ref=${user.referralCode}`;
     navigator.clipboard.writeText(refLink);
@@ -38,11 +41,13 @@ export default function Profile() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // ===== Toast =====
   const showToast = (type, message) => {
-    setToast({ type, message, visible: true });
+    setToast({ type, message });
     setTimeout(() => setToast(null), 2500);
   };
 
+  // ===== Upload image to Cloudinary =====
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -62,42 +67,44 @@ export default function Profile() {
       const data = await res.json();
 
       if (data.secure_url) {
-        setProfilePic(data.secure_url);
-
-        // Automatically update profile after successful upload
         const updatedUser = await updateProfile({ profilePicture: data.secure_url });
         setUser(updatedUser);
-
-        showToast("success", "Profile picture updated successfully!");
+        setProfilePic(data.secure_url);
+        showToast("success", "Profile picture updated!");
       } else {
         showToast("error", "Image upload failed.");
       }
-    } catch {
+    } catch (error) {
+      console.error("Image upload error:", error);
       showToast("error", "Failed to upload image.");
     } finally {
       setUploading(false);
     }
   };
 
+  // ===== Save profile changes =====
   const handleSave = async () => {
     try {
       const updatedFields = { email, bio, dob, country };
-      if (password) updatedFields.password = password;
+      if (password.trim() !== "") updatedFields.password = password;
       if (profilePic) updatedFields.profilePicture = profilePic;
 
       const updatedUser = await updateProfile(updatedFields);
       setUser(updatedUser);
       setEditing(false);
       showToast("success", "Profile updated successfully!");
-    } catch {
+    } catch (error) {
+      console.error("Profile update error:", error);
       showToast("error", "Failed to update profile.");
     }
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto bg-white rounded-2xl shadow-md">
+    <div className="p-6 max-w-3xl mx-auto">
+      <GoBackButton />
       <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">My Profile</h1>
 
+      {/* Toast */}
       {toast && (
         <div
           className={`fixed top-4 right-4 px-4 py-2 rounded text-white shadow transition ${
@@ -145,98 +152,142 @@ export default function Profile() {
         </h2>
       </div>
 
-      {/* Profile Form */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-semibold mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded-lg p-2"
-            disabled={!editing}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold mb-1">Date of Birth</label>
-          <input
-            type="date"
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            className="w-full border rounded-lg p-2"
-            disabled={!editing}
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm font-semibold mb-1">Bio</label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            className="w-full border rounded-lg p-2"
-            rows="3"
-            disabled={!editing}
-          ></textarea>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold mb-1">Country</label>
-          <input
-            type="text"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="w-full border rounded-lg p-2"
-            disabled={!editing}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold mb-1">New Password</label>
-          <input
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded-lg p-2"
-            disabled={!editing}
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-between mt-8">
-        <button
-          onClick={() => setEditing(!editing)}
-          className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition"
-        >
-          {editing ? "Cancel" : "Edit Profile"}
-        </button>
-
-        {editing && (
-          <button
-            onClick={handleSave}
-            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Save Changes
-          </button>
-        )}
-      </div>
-
-      {/* Referral Link Section */}
-      <div className="mt-10 p-4 bg-gray-50 rounded-lg border flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">Your referral link</p>
-          <p className="font-semibold text-blue-700 text-sm break-all">
-            {`${window.location.origin}/register?ref=${user.referralCode}`}
+      {/* User Stats */}
+      <div className="bg-white rounded-xl shadow p-5 mb-6">
+        <div className="space-y-2 text-gray-700">
+          <p>
+            <Globe className="inline w-4 h-4 mr-2 text-blue-500" />
+            <strong>Country:</strong> {user.country || "Not set"}
+          </p>
+          <p>
+            <Users className="inline w-4 h-4 mr-2 text-blue-500" />
+            <strong>Followers:</strong> {user.followers?.length || 0}
+            {" · "}
+            <strong>Following:</strong> {user.following?.length || 0}
+          </p>
+          <p>
+            <strong>Points:</strong>{" "}
+            <span className="text-green-600 font-semibold">{user.points}</span>
           </p>
         </div>
-        <button
-          onClick={handleCopyReferral}
-          className="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
-        >
-          {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          {copied ? "Copied" : "Copy"}
-        </button>
+
+        {/* Referral Link */}
+        <div className="mt-4 bg-gray-50 p-3 rounded-lg">
+          <p className="text-sm text-gray-600 mb-2 font-medium">
+            Invite friends and earn rewards
+          </p>
+          <div className="flex items-center justify-between bg-white border rounded-lg p-2">
+            <span className="truncate text-gray-700 text-sm">
+              {`${window.location.origin}/register?ref=${user.referralCode}`}
+            </span>
+            <button
+              onClick={handleCopyReferral}
+              className="ml-3 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              {copied ? (
+                <CheckCircle className="w-4 h-4" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Editable Fields */}
+      <div className="bg-white rounded-xl shadow p-5">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Details</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block font-medium">Email</label>
+            <input
+              className="w-full border rounded p-2"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={!editing}
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Bio</label>
+            <textarea
+              className="w-full border rounded p-2"
+              rows={3}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              disabled={!editing}
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Date of Birth</label>
+            <input
+              className="w-full border rounded p-2"
+              type="date"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              disabled={!editing}
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Country</label>
+            <input
+              className="w-full border rounded p-2"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              disabled={!editing}
+              placeholder="Country of origin"
+            />
+          </div>
+
+          {editing && (
+            <div>
+              <label className="block font-medium">New Password</label>
+              <input
+                className="w-full border rounded p-2"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter new password (optional)"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 flex gap-3">
+          {editing ? (
+            <>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setEditing(false);
+                  setEmail(user.email);
+                  setBio(user.bio || "");
+                  setDob(user.dob || "");
+                  setCountry(user.country || "");
+                  setPassword("");
+                }}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setEditing(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Edit Profile
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
