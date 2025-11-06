@@ -1,4 +1,3 @@
-// src/components/WatchPlayer.jsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import Confetti from "react-confetti";
 import api from "../api/api";
@@ -29,7 +28,7 @@ export default function WatchPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayPopup, setShowPlayPopup] = useState(false);
 
-  // 🔌 Connect socket
+  // 🔌 Socket connection
   useEffect(() => {
     socketRef.current = io(
       import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"
@@ -45,7 +44,7 @@ export default function WatchPlayer({
     };
   }, [user._id, setUserPoints]);
 
-  // 🧹 Cleanup
+  // 🧹 Cleanup on unmount
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -54,20 +53,26 @@ export default function WatchPlayer({
     };
   }, []);
 
-  // 🔄 Reset timer when task changes
+  // 🔁 Reset timer when task changes
   useEffect(() => {
     stopTimer();
     setTimeLeft(task.duration);
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
   }, [task]);
 
-  // 🕒 Timer logic
+  // 🎬 START: Handle Play
   const startTimer = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (isPlaying) return;
     setCompleted(false);
     setRewardEarned(null);
     setIsPlaying(true);
 
+    // ✅ Force iframe reload with autoplay + mute
+    if (iframeRef.current) {
+      iframeRef.current.src = getEmbedUrl(task.url, true);
+    }
+
+    // 🕒 Start countdown synced with video
     intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -79,9 +84,22 @@ export default function WatchPlayer({
       });
     }, 1000);
 
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, true);
+    // 🎧 Try unmute after 2s (YouTube only)
+    setTimeout(() => {
+      try {
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            '{"event":"command","func":"unMute","args":""}',
+            "*"
+          );
+        }
+      } catch (err) {
+        console.warn("Unmute failed (probably non-YouTube):", err);
+      }
+    }, 2000);
   };
 
+  // ■ STOP: Handle Stop
   const stopTimer = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setTimeLeft(task.duration);
@@ -90,7 +108,7 @@ export default function WatchPlayer({
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
   };
 
-  // 🎯 Complete + Reward + Auto-next
+  // 🎯 Handle Watch Completion
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
@@ -117,7 +135,7 @@ export default function WatchPlayer({
       const t3 = setTimeout(() => setShowRewardPopup(false), 3500);
       cleanupTimeoutsRef.current.push(t1, t2, t3);
 
-      // ✅ Auto next video after popup
+      // ✅ Auto next task
       autoNextRef.current = setTimeout(() => {
         if (goToNextTask) goToNextTask();
         setTimeout(() => {
@@ -130,29 +148,29 @@ export default function WatchPlayer({
     }
   };
 
-  // 🌐 Embed builder
+  // 🌐 Embed URL Builder
   const getEmbedUrl = (url, autoplay = false) => {
     let embedUrl = "";
     try {
       if (url.includes("youtube.com")) {
         const id = new URL(url).searchParams.get("v");
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
+        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=1&enablejsapi=1`;
+        if (autoplay) embedUrl += "&autoplay=1&mute=1";
       } else if (url.includes("youtu.be")) {
         const id = url.split("/").pop();
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
+        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=1&enablejsapi=1`;
+        if (autoplay) embedUrl += "&autoplay=1&mute=1";
       } else if (url.includes("tiktok.com")) {
         embedUrl = url.replace("/video/", "/embed/v2/");
       } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
         embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
           url
-        )}&show_text=false`;
+        )}&show_text=false&autoplay=${autoplay ? "true" : "false"}`;
       } else if (url.includes("instagram.com")) {
         embedUrl = `${url}embed`;
       } else {
         embedUrl = url;
       }
-      if (autoplay)
-        embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
     } catch {
       embedUrl = url;
     }
@@ -161,7 +179,7 @@ export default function WatchPlayer({
 
   const progressPercent = ((task.duration - timeLeft) / task.duration) * 100;
 
-  // Auto hide play-popup after 3s
+  // Auto-hide play-popup after 3s
   useEffect(() => {
     if (showPlayPopup) {
       const timeout = setTimeout(() => setShowPlayPopup(false), 3000);
@@ -171,7 +189,7 @@ export default function WatchPlayer({
 
   return (
     <div className="relative border p-4 rounded-lg shadow space-y-3 bg-white">
-      {/* 🎥 Video */}
+      {/* 🎥 Video Player */}
       <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
         <iframe
           ref={iframeRef}
@@ -179,7 +197,7 @@ export default function WatchPlayer({
           src={getEmbedUrl(task.url, false)}
           title="Reel Player"
           frameBorder="0"
-          allow="autoplay; fullscreen; encrypted-media"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
           allowFullScreen
         />
         {!isPlaying && (
@@ -190,7 +208,7 @@ export default function WatchPlayer({
         )}
       </div>
 
-      {/* 💬 Watch & Earn info */}
+      {/* Info */}
       <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
         🎯 Watch this video and earn +{task.points} points!
       </div>
@@ -199,16 +217,14 @@ export default function WatchPlayer({
       {showRewardPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50 pointer-events-none">
           <div className="bg-green-500 text-white text-lg font-bold px-6 py-4 rounded-xl shadow-lg animate-bounce">
-            🎉 You earned +{rewardEarned ?? task.points} points for watching this video!
+            🎉 You earned +{rewardEarned ?? task.points} points!
           </div>
         </div>
       )}
 
-      {showConfetti && (
-        <Confetti width={window.innerWidth} height={window.innerHeight} />
-      )}
+      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
 
-      {/* 🔋 Progress */}
+      {/* 🔋 Progress Bar */}
       <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
         <div
           className="bg-green-500 h-3 rounded transition-all duration-300"
@@ -243,16 +259,14 @@ export default function WatchPlayer({
         </button>
       </div>
 
-      {/* 💬 Custom instruction popup (smooth fade) */}
+      {/* 💬 Play Instruction Popup */}
       {showPlayPopup && (
         <div
           onClick={() => setShowPlayPopup(false)}
           className="absolute inset-0 flex items-center justify-center bg-black/50 z-50 backdrop-blur-sm animate-fadeIn"
         >
           <div className="bg-white/95 text-gray-900 px-6 py-4 rounded-2xl shadow-2xl text-center max-w-xs transform scale-100 animate-slideUp transition-all duration-300">
-            <p className="font-semibold text-lg mb-2">
-              🎬 Use the Custom Play Button
-            </p>
+            <p className="font-semibold text-lg mb-2">🎬 Use the Custom Play Button</p>
             <p className="text-sm text-gray-700 leading-snug">
               Please tap the green <strong>▶ Play</strong> button below to start watching
               and earn your reward.
