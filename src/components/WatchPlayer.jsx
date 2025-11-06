@@ -1,287 +1,145 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
-import Confetti from "react-confetti";
-import api from "../api/api";
-import { AuthContext } from "../context/AuthContext";
-import { io } from "socket.io-client";
+import React, { useRef, useState, useEffect } from "react";
+import { Play, Pause, Loader2 } from "lucide-react";
 
 export default function WatchPlayer({
   task,
   refreshTasks,
   userPoints,
   setUserPoints,
-  goToNextTask,
+  autoPlayNext = false,
 }) {
-  const { user } = useContext(AuthContext);
-  const intervalRef = useRef(null);
-  const autoNextRef = useRef(null);
-  const audioRef = useRef(null);
-  const iframeRef = useRef(null);
-  const cleanupTimeoutsRef = useRef([]);
-  const socketRef = useRef(null);
-
-  const [timeLeft, setTimeLeft] = useState(task.duration);
-  const [completed, setCompleted] = useState(false);
-  const [rewardFlash, setRewardFlash] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [showRewardPopup, setShowRewardPopup] = useState(false);
-  const [rewardEarned, setRewardEarned] = useState(null);
+  const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showPlayPopup, setShowPlayPopup] = useState(false);
+  const [watchTime, setWatchTime] = useState(0);
+  const [completed, setCompleted] = useState(false);
+  const [showNativePlayWarning, setShowNativePlayWarning] = useState(false);
+  const rewardDuration = 30; // seconds required to earn reward
+  const rewardPoints = task?.points || 10;
 
-  // 🔌 Socket connection
+  // ✅ Detect native play attempts (when user clicks the built-in play button)
   useEffect(() => {
-    socketRef.current = io(
-      import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"
-    );
-    socketRef.current.emit("joinRoom", user._id);
-
-    socketRef.current.on("walletUpdated", ({ userId, balance }) => {
-      if (userId === user._id) setUserPoints(balance);
-    });
-
-    return () => {
-      socketRef.current.disconnect();
+    const video = videoRef.current;
+    const handleNativePlay = () => {
+      if (!isPlaying) {
+        // Pause immediately if native play button was clicked
+        video.pause();
+        setShowNativePlayWarning(true);
+      }
     };
-  }, [user._id, setUserPoints]);
 
-  // 🧹 Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (autoNextRef.current) clearTimeout(autoNextRef.current);
-      cleanupTimeoutsRef.current.forEach((t) => clearTimeout(t));
-    };
-  }, []);
-
-  // 🔁 Reset timer when task changes
-  useEffect(() => {
-    stopTimer();
-    setTimeLeft(task.duration);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
-  }, [task]);
-
-  // 🎬 START: Handle Play
-  const startTimer = () => {
-    if (isPlaying) return;
-    setCompleted(false);
-    setRewardEarned(null);
-    setIsPlaying(true);
-
-    // ✅ Force iframe reload with autoplay + mute
-    if (iframeRef.current) {
-      iframeRef.current.src = getEmbedUrl(task.url, true);
+    if (video) {
+      video.addEventListener("play", handleNativePlay);
     }
 
-    // 🕒 Start countdown synced with video
-    intervalRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          handleCompleteWatch();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    // 🎧 Try unmute after 2s (YouTube only)
-    setTimeout(() => {
-      try {
-        if (iframeRef.current?.contentWindow) {
-          iframeRef.current.contentWindow.postMessage(
-            '{"event":"command","func":"unMute","args":""}',
-            "*"
-          );
-        }
-      } catch (err) {
-        console.warn("Unmute failed (probably non-YouTube):", err);
+    return () => {
+      if (video) {
+        video.removeEventListener("play", handleNativePlay);
       }
-    }, 2000);
-  };
+    };
+  }, [isPlaying]);
 
-  // ■ STOP: Handle Stop
-  const stopTimer = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setTimeLeft(task.duration);
-    setCompleted(false);
-    setIsPlaying(false);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
-  };
+  // ✅ Timer for watch progress
+  useEffect(() => {
+    let interval = null;
 
-  // 🎯 Handle Watch Completion
-  const handleCompleteWatch = async () => {
-    if (completed) return;
+    if (isPlaying && !completed) {
+      interval = setInterval(() => {
+        setWatchTime((prev) => {
+          if (prev + 1 >= rewardDuration) {
+            clearInterval(interval);
+            handleReward();
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  const handleReward = () => {
     setCompleted(true);
     setIsPlaying(false);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+    setUserPoints(userPoints + rewardPoints);
+    if (autoPlayNext && refreshTasks) {
+      setTimeout(refreshTasks, 1500);
+    }
+  };
+
+  // ✅ Custom play button handler
+  const handleCustomPlay = async () => {
+    const video = videoRef.current;
+    setShowNativePlayWarning(false);
 
     try {
-      const res = await api.post(`/tasks/watch/${task._id}/complete`);
-      const earned = res?.data?.rewardPoints || task.points || 0;
-      const newBalance = res?.data?.newBalance ?? userPoints + earned;
-
-      setUserPoints(newBalance);
-      socketRef.current.emit("walletUpdate", { userId: user._id, balance: newBalance });
-
-      // 🎉 Reward visuals
-      setRewardEarned(earned);
-      setShowRewardPopup(true);
-      setRewardFlash(true);
-      setShowConfetti(true);
-      audioRef.current?.play();
-
-      const t1 = setTimeout(() => setRewardFlash(false), 2000);
-      const t2 = setTimeout(() => setShowConfetti(false), 3000);
-      const t3 = setTimeout(() => setShowRewardPopup(false), 3500);
-      cleanupTimeoutsRef.current.push(t1, t2, t3);
-
-      // ✅ Auto next task
-      autoNextRef.current = setTimeout(() => {
-        if (goToNextTask) goToNextTask();
-        setTimeout(() => {
-          const playBtn = document.querySelector("button.bg-green-600");
-          playBtn?.click();
-        }, 1500);
-      }, 4000);
+      await video.play();
+      setIsPlaying(true);
     } catch (err) {
-      console.error("Error completing watch:", err);
+      console.error("Video playback failed:", err);
+      alert("Cannot play video automatically. Try tapping the custom play button again.");
     }
   };
 
-  // 🌐 Embed URL Builder
-  const getEmbedUrl = (url, autoplay = false) => {
-    let embedUrl = "";
-    try {
-      if (url.includes("youtube.com")) {
-        const id = new URL(url).searchParams.get("v");
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=1&enablejsapi=1`;
-        if (autoplay) embedUrl += "&autoplay=1&mute=1";
-      } else if (url.includes("youtu.be")) {
-        const id = url.split("/").pop();
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=1&enablejsapi=1`;
-        if (autoplay) embedUrl += "&autoplay=1&mute=1";
-      } else if (url.includes("tiktok.com")) {
-        embedUrl = url.replace("/video/", "/embed/v2/");
-      } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
-        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
-          url
-        )}&show_text=false&autoplay=${autoplay ? "true" : "false"}`;
-      } else if (url.includes("instagram.com")) {
-        embedUrl = `${url}embed`;
-      } else {
-        embedUrl = url;
-      }
-    } catch {
-      embedUrl = url;
-    }
-    return embedUrl;
+  const handlePause = () => {
+    const video = videoRef.current;
+    video.pause();
+    setIsPlaying(false);
   };
 
-  const progressPercent = ((task.duration - timeLeft) / task.duration) * 100;
-
-  // Auto-hide play-popup after 3s
-  useEffect(() => {
-    if (showPlayPopup) {
-      const timeout = setTimeout(() => setShowPlayPopup(false), 3000);
-      return () => clearTimeout(timeout);
-    }
-  }, [showPlayPopup]);
+  const handleVideoEnd = () => {
+    setCompleted(true);
+    setIsPlaying(false);
+    handleReward();
+  };
 
   return (
-    <div className="relative border p-4 rounded-lg shadow space-y-3 bg-white">
-      {/* 🎥 Video Player */}
-      <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
-        <iframe
-          ref={iframeRef}
-          className="absolute top-0 left-0 w-full h-full"
-          src={getEmbedUrl(task.url, false)}
-          title="Reel Player"
-          frameBorder="0"
-          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-          allowFullScreen
+    <div className="w-full text-center space-y-3">
+      <div className="relative">
+        <video
+          ref={videoRef}
+          src={task?.videoUrl}
+          className="w-full rounded-xl shadow-lg"
+          onEnded={handleVideoEnd}
+          controls={false} // hide native controls
         />
-        {!isPlaying && (
-          <div
-            className="absolute inset-0 cursor-pointer bg-transparent"
-            onClick={() => setShowPlayPopup(true)}
-          />
+      </div>
+
+      {/* ⚠️ Warning for native play clicks */}
+      {showNativePlayWarning && (
+        <p className="text-red-600 text-sm mt-1">
+          ⚠️ Please use the custom play button below to start the video.
+        </p>
+      )}
+
+      {/* 🎮 Custom Controls */}
+      <div className="flex justify-center gap-3 mt-3">
+        {!isPlaying ? (
+          <button
+            onClick={handleCustomPlay}
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center gap-2 transition"
+          >
+            <Play size={18} /> Play & Earn
+          </button>
+        ) : (
+          <button
+            onClick={handlePause}
+            className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-full flex items-center gap-2 transition"
+          >
+            <Pause size={18} /> Pause
+          </button>
         )}
       </div>
 
-      {/* Info */}
-      <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
-        🎯 Watch this video and earn +{task.points} points!
+      {/* ⏱ Timer & Reward Display */}
+      <div className="mt-2 text-gray-700 text-sm">
+        {completed ? (
+          <span className="text-green-600 font-semibold">
+            ✅ Completed! +{rewardPoints} points earned
+          </span>
+        ) : (
+          <span>⏱ Watch time: {watchTime}s / {rewardDuration}s</span>
+        )}
       </div>
-
-      {/* 🎉 Reward Popup */}
-      {showRewardPopup && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50 pointer-events-none">
-          <div className="bg-green-500 text-white text-lg font-bold px-6 py-4 rounded-xl shadow-lg animate-bounce">
-            🎉 You earned +{rewardEarned ?? task.points} points!
-          </div>
-        </div>
-      )}
-
-      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
-
-      {/* 🔋 Progress Bar */}
-      <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
-        <div
-          className="bg-green-500 h-3 rounded transition-all duration-300"
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
-
-      {/* Stats */}
-      <div className="flex justify-between text-sm text-gray-600">
-        <span>⏱ {task.duration}s</span>
-        <span>🎁 {task.points} pts</span>
-        <span>🕒 {timeLeft}s left</span>
-        <span>💰 Total: {userPoints}</span>
-      </div>
-
-      {/* 🎮 Controls */}
-      <div className="flex gap-2">
-        <button
-          onClick={startTimer}
-          disabled={isPlaying}
-          className={`px-4 py-2 rounded text-white font-semibold ${
-            isPlaying ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          ▶ Play
-        </button>
-        <button
-          onClick={stopTimer}
-          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-semibold"
-        >
-          ■ Stop
-        </button>
-      </div>
-
-      {/* 💬 Play Instruction Popup */}
-      {showPlayPopup && (
-        <div
-          onClick={() => setShowPlayPopup(false)}
-          className="absolute inset-0 flex items-center justify-center bg-black/50 z-50 backdrop-blur-sm animate-fadeIn"
-        >
-          <div className="bg-white/95 text-gray-900 px-6 py-4 rounded-2xl shadow-2xl text-center max-w-xs transform scale-100 animate-slideUp transition-all duration-300">
-            <p className="font-semibold text-lg mb-2">🎬 Use the Custom Play Button</p>
-            <p className="text-sm text-gray-700 leading-snug">
-              Please tap the green <strong>▶ Play</strong> button below to start watching
-              and earn your reward.
-            </p>
-            <button
-              onClick={() => setShowPlayPopup(false)}
-              className="mt-3 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-full shadow-md transition"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
-
-      <audio ref={audioRef} src="/sounds/reward-sound.mp3" preload="auto" />
     </div>
   );
 }
