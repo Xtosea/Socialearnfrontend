@@ -1,293 +1,182 @@
-import React, { useContext, useState, useEffect } from "react";
+// src/pages/Profile.jsx
+import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Copy, CheckCircle, Globe, Users, Camera } from "lucide-react";
-import GoBackButton from "../components/GoBackButton";
+import api from "../api/api";
 
 export default function Profile() {
-  const { user, setUser, updateProfile } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const [editing, setEditing] = useState(false);
-  const [email, setEmail] = useState("");
-  const [bio, setBio] = useState("");
-  const [dob, setDob] = useState("");
-  const [country, setCountry] = useState("");
-  const [password, setPassword] = useState("");
-  const [toast, setToast] = useState(null);
-  const [copied, setCopied] = useState(false);
-  const [profilePic, setProfilePic] = useState("");
-  const [preview, setPreview] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  const [formData, setFormData] = useState({
+    username: user?.username || "",
+    email: user?.email || "",
+    country: user?.country || "",
+    bio: user?.bio || "",
+    dateOfBirth: user?.dateOfBirth || "",
+    password: "",
+  });
 
-  // ===== Load user data =====
-  useEffect(() => {
-    if (user) {
-      setEmail(user.email || "");
-      setBio(user.bio || "");
-      setDob(user.dob || "");
-      setCountry(user.country || "");
-      setProfilePic(user.profilePicture || "");
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage("");
+    try {
+      const res = await api.put("/auth/update", formData);
+      setUser(res.data.user);
+      setMessage("✅ Profile updated successfully!");
+      setEditing(false);
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Failed to update profile.");
+    } finally {
+      setSaving(false);
     }
-  }, [user]);
-
-  if (!user) return <div>Loading profile...</div>;
-
-  // ===== Copy referral link =====
-  const handleCopyReferral = () => {
-    const refLink = `${window.location.origin}/register?ref=${user.referralCode}`;
-    navigator.clipboard.writeText(refLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
-  // ===== Toast =====
-  const showToast = (type, message) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 2500);
-  };
-
-  // ===== Upload image to Cloudinary =====
-  const handleImageChange = async (e) => {
+  // 📸 Profile picture upload
+  const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setPreview(URL.createObjectURL(file));
     setUploading(true);
+    setMessage("");
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
+    formData.append("upload_preset", "socialearn_unsigned"); // your Cloudinary preset
+    formData.append("folder", "profile_pics");
 
     try {
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        { method: "POST", body: formData }
+      const cloudRes = await fetch(
+        `https://api.cloudinary.com/v1_1/<your-cloud-name>/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
       );
-      const data = await res.json();
+      const data = await cloudRes.json();
 
-      if (data.secure_url) {
-        const updatedUser = await updateProfile({ profilePicture: data.secure_url });
-        setUser(updatedUser);
-        setProfilePic(data.secure_url);
-        showToast("success", "Profile picture updated!");
-      } else {
-        showToast("error", "Image upload failed.");
-      }
-    } catch (error) {
-      console.error("Image upload error:", error);
-      showToast("error", "Failed to upload image.");
+      // Now update user profile with the new image URL
+      const res = await api.put("/auth/update", {
+        profilePicture: data.secure_url,
+      });
+      setUser(res.data.user);
+      setMessage("✅ Profile picture updated!");
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Failed to upload profile picture.");
     } finally {
       setUploading(false);
     }
   };
 
-  // ===== Save profile changes =====
-  const handleSave = async () => {
-    try {
-      const updatedFields = { email, bio, dob, country };
-      if (password.trim() !== "") updatedFields.password = password;
-      if (profilePic) updatedFields.profilePicture = profilePic;
-
-      const updatedUser = await updateProfile(updatedFields);
-      setUser(updatedUser);
-      setEditing(false);
-      showToast("success", "Profile updated successfully!");
-    } catch (error) {
-      console.error("Profile update error:", error);
-      showToast("error", "Failed to update profile.");
-    }
-  };
+  if (!user) return <div>Loading...</div>;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <GoBackButton />
-      <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">My Profile</h1>
+    <div className="p-6 max-w-2xl mx-auto">
+      <h1 className="text-3xl font-bold mb-4">My Profile</h1>
 
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 px-4 py-2 rounded text-white shadow transition ${
-            toast.type === "success" ? "bg-green-600" : "bg-red-600"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
+      {message && <p className="mb-4 text-green-600">{message}</p>}
 
       {/* Profile Picture */}
-      <div className="flex flex-col items-center mb-6">
-        <div className="relative">
-          <img
-            src={
-              preview
-                ? preview
-                : user.profilePicture ||
-                  "https://via.placeholder.com/120x120.png?text=Profile"
-            }
-            alt="Profile"
-            className="w-32 h-32 rounded-full object-cover border-4 border-blue-200 shadow-md"
-          />
-          <label
-            htmlFor="profileUpload"
-            className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700"
-          >
-            <Camera className="w-4 h-4" />
-            <input
-              type="file"
-              id="profileUpload"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
+      <div className="mb-4 flex items-center gap-4">
+        <img
+          src={user.profilePicture || "https://via.placeholder.com/120"}
+          alt="profile"
+          className="w-24 h-24 rounded-full object-cover border"
+        />
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Change Profile Picture
           </label>
-        </div>
-        {uploading && (
-          <p className="text-sm text-blue-600 mt-2 animate-pulse">
-            Uploading image...
-          </p>
-        )}
-        <h2 className="text-lg font-semibold text-gray-700 mt-3">
-          @{user.username}
-        </h2>
-      </div>
-
-      {/* User Stats */}
-      <div className="bg-white rounded-xl shadow p-5 mb-6">
-        <div className="space-y-2 text-gray-700">
-          <p>
-            <Globe className="inline w-4 h-4 mr-2 text-blue-500" />
-            <strong>Country:</strong> {user.country || "Not set"}
-          </p>
-          <p>
-            <Users className="inline w-4 h-4 mr-2 text-blue-500" />
-            <strong>Followers:</strong> {user.followers?.length || 0}
-            {" · "}
-            <strong>Following:</strong> {user.following?.length || 0}
-          </p>
-          <p>
-            <strong>Points:</strong>{" "}
-            <span className="text-green-600 font-semibold">{user.points}</span>
-          </p>
-        </div>
-
-        {/* Referral Link */}
-        <div className="mt-4 bg-gray-50 p-3 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2 font-medium">
-            Invite friends and earn rewards
-          </p>
-          <div className="flex items-center justify-between bg-white border rounded-lg p-2">
-            <span className="truncate text-gray-700 text-sm">
-              {`${window.location.origin}/register?ref=${user.referralCode}`}
-            </span>
-            <button
-              onClick={handleCopyReferral}
-              className="ml-3 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-            >
-              {copied ? (
-                <CheckCircle className="w-4 h-4" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
-            </button>
-          </div>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleUpload}
+            disabled={uploading}
+          />
         </div>
       </div>
 
       {/* Editable Fields */}
-      <div className="bg-white rounded-xl shadow p-5">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Details</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block font-medium">Email</label>
-            <input
-              className="w-full border rounded p-2"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={!editing}
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium">Bio</label>
-            <textarea
-              className="w-full border rounded p-2"
-              rows={3}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              disabled={!editing}
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium">Date of Birth</label>
-            <input
-              className="w-full border rounded p-2"
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              disabled={!editing}
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium">Country</label>
-            <input
-              className="w-full border rounded p-2"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              disabled={!editing}
-              placeholder="Country of origin"
-            />
-          </div>
-
-          {editing && (
-            <div>
-              <label className="block font-medium">New Password</label>
-              <input
-                className="w-full border rounded p-2"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password (optional)"
-              />
+      <div className="space-y-4">
+        {["username", "email", "country", "bio", "dateOfBirth", "password"].map(
+          (field) => (
+            <div key={field}>
+              <label className="block font-medium mb-1 capitalize">
+                {field === "dateOfBirth"
+                  ? "Date of Birth"
+                  : field === "bio"
+                  ? "Bio"
+                  : field}
+              </label>
+              {editing ? (
+                <input
+                  type={field === "password" ? "password" : "text"}
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded"
+                />
+              ) : (
+                <p>
+                  {field === "password"
+                    ? "••••••••"
+                    : formData[field] || "Not set"}
+                </p>
+              )}
             </div>
-          )}
-        </div>
+          )
+        )}
 
-        <div className="mt-6 flex gap-3">
-          {editing ? (
-            <>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  setEditing(false);
-                  setEmail(user.email);
-                  setBio(user.bio || "");
-                  setDob(user.dob || "");
-                  setCountry(user.country || "");
-                  setPassword("");
-                }}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setEditing(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Edit Profile
-            </button>
-          )}
+        <div>
+          <label className="block font-medium mb-1">Points:</label>
+          <p>{user.points || 0}</p>
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="mt-6 flex gap-3">
+        {editing ? (
+          <>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={() => {
+                setEditing(false);
+                setFormData({
+                  username: user.username,
+                  email: user.email,
+                  country: user.country,
+                  bio: user.bio,
+                  dateOfBirth: user.dateOfBirth,
+                  password: "",
+                });
+              }}
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => setEditing(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Edit Profile
+          </button>
+        )}
       </div>
     </div>
   );
