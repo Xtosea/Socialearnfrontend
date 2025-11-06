@@ -1,72 +1,49 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Play, Pause, Loader2 } from "lucide-react";
+import { Play, Loader2 } from "lucide-react";
 
-export default function WatchPlayer({
-  task,
-  refreshTasks,
-  userPoints,
-  setUserPoints,
-  autoPlayNext = false,
-}) {
+export default function VideoCard({ videoUrl, rewardPoints = 10, onComplete }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showNativePlayWarning, setShowNativePlayWarning] = useState(false);
   const [watchTime, setWatchTime] = useState(0);
   const [completed, setCompleted] = useState(false);
-  const [showNativePlayWarning, setShowNativePlayWarning] = useState(false);
-  const rewardDuration = 30; // seconds required to earn reward
-  const rewardPoints = task?.points || 10;
 
-  // ✅ Detect native play attempts (when user clicks the built-in play button)
+  useEffect(() => {
+    let interval = null;
+
+    if (isPlaying && !completed) {
+      interval = setInterval(() => {
+        setWatchTime((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+
+    return () => clearInterval(interval);
+  }, [isPlaying, completed]);
+
+  // 👇 Detect native play attempts
   useEffect(() => {
     const video = videoRef.current;
-    const handleNativePlay = () => {
+    const handlePlay = () => {
       if (!isPlaying) {
-        // Pause immediately if native play button was clicked
+        // User clicked native play
         video.pause();
         setShowNativePlayWarning(true);
       }
     };
 
     if (video) {
-      video.addEventListener("play", handleNativePlay);
+      video.addEventListener("play", handlePlay);
     }
 
     return () => {
       if (video) {
-        video.removeEventListener("play", handleNativePlay);
+        video.removeEventListener("play", handlePlay);
       }
     };
   }, [isPlaying]);
 
-  // ✅ Timer for watch progress
-  useEffect(() => {
-    let interval = null;
-
-    if (isPlaying && !completed) {
-      interval = setInterval(() => {
-        setWatchTime((prev) => {
-          if (prev + 1 >= rewardDuration) {
-            clearInterval(interval);
-            handleReward();
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    }
-
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
-  const handleReward = () => {
-    setCompleted(true);
-    setIsPlaying(false);
-    setUserPoints(userPoints + rewardPoints);
-    if (autoPlayNext && refreshTasks) {
-      setTimeout(refreshTasks, 1500);
-    }
-  };
-
-  // ✅ Custom play button handler
   const handleCustomPlay = async () => {
     const video = videoRef.current;
     setShowNativePlayWarning(false);
@@ -74,9 +51,8 @@ export default function WatchPlayer({
     try {
       await video.play();
       setIsPlaying(true);
-    } catch (err) {
-      console.error("Video playback failed:", err);
-      alert("Cannot play video automatically. Try tapping the custom play button again.");
+    } catch (error) {
+      console.error("Error playing video:", error);
     }
   };
 
@@ -86,58 +62,58 @@ export default function WatchPlayer({
     setIsPlaying(false);
   };
 
-  const handleVideoEnd = () => {
+  const handleEnd = () => {
     setCompleted(true);
     setIsPlaying(false);
-    handleReward();
+    if (onComplete) onComplete(rewardPoints);
   };
 
   return (
-    <div className="w-full text-center space-y-3">
-      <div className="relative">
-        <video
-          ref={videoRef}
-          src={task?.videoUrl}
-          className="w-full rounded-xl shadow-lg"
-          onEnded={handleVideoEnd}
-          controls={false} // hide native controls
-        />
-      </div>
+    <div className="w-full max-w-md mx-auto text-center space-y-3">
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        className="w-full rounded-xl shadow-md"
+        onEnded={handleEnd}
+        controls={false} // hide native play button
+      />
 
-      {/* ⚠️ Warning for native play clicks */}
+      {/* ⚠️ Message when user clicks native play */}
       {showNativePlayWarning && (
-        <p className="text-red-600 text-sm mt-1">
-          ⚠️ Please use the custom play button below to start the video.
+        <p className="text-red-600 text-sm">
+          Please use the custom play button below to start the video.
         </p>
       )}
 
-      {/* 🎮 Custom Controls */}
-      <div className="flex justify-center gap-3 mt-3">
+      {/* 🕹️ Custom controls */}
+      <div className="flex justify-center gap-3 mt-2">
         {!isPlaying ? (
           <button
             onClick={handleCustomPlay}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center gap-2 transition"
+            className="px-5 py-2 rounded-full bg-blue-600 text-white flex items-center gap-2 hover:bg-blue-700 transition"
           >
-            <Play size={18} /> Play & Earn
+            <Play size={20} />
+            Play & Earn
           </button>
         ) : (
           <button
             onClick={handlePause}
-            className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-full flex items-center gap-2 transition"
+            className="px-5 py-2 rounded-full bg-gray-600 text-white flex items-center gap-2 hover:bg-gray-700 transition"
           >
-            <Pause size={18} /> Pause
+            <Loader2 size={20} className="animate-spin" />
+            Pause
           </button>
         )}
       </div>
 
-      {/* ⏱ Timer & Reward Display */}
-      <div className="mt-2 text-gray-700 text-sm">
+      {/* 🧭 Timer & Reward Status */}
+      <div className="text-sm mt-2 text-gray-700">
         {completed ? (
           <span className="text-green-600 font-semibold">
-            ✅ Completed! +{rewardPoints} points earned
+            ✅ Completed! +{rewardPoints} Points
           </span>
         ) : (
-          <span>⏱ Watch time: {watchTime}s / {rewardDuration}s</span>
+          <span>⏱ Watch Time: {watchTime}s</span>
         )}
       </div>
     </div>
