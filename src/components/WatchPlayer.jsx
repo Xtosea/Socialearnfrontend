@@ -27,10 +27,9 @@ export default function WatchPlayer({
   const [showConfetti, setShowConfetti] = useState(false);
   const [rewardFlash, setRewardFlash] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [showPlayPopup, setShowPlayPopup] = useState(false);
 
-  // 🔌 Connect socket
+  // 🎧 Connect socket
   useEffect(() => {
     socketRef.current = io(
       import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"
@@ -41,10 +40,12 @@ export default function WatchPlayer({
       if (userId === user._id) setUserPoints(balance);
     });
 
-    return () => socketRef.current.disconnect();
+    return () => {
+      socketRef.current.disconnect();
+    };
   }, [user._id, setUserPoints]);
 
-  // 🧹 Cleanup
+  // 🧹 Cleanup intervals
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -53,14 +54,14 @@ export default function WatchPlayer({
     };
   }, []);
 
-  // 🔄 Reset on task change
+  // 🔄 Reset when new task loads
   useEffect(() => {
-    stopTimer(true);
+    stopTimer();
     setTimeLeft(task.duration);
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
   }, [task]);
 
-  // 🌐 Embed builder
+  // 🌐 Build embed URLs for each platform
   const getEmbedUrl = (url, autoplay = false) => {
     try {
       let embedUrl = "";
@@ -81,34 +82,24 @@ export default function WatchPlayer({
       } else {
         embedUrl = url;
       }
-      if (autoplay)
-        embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
+      if (autoplay) embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
       return embedUrl;
     } catch {
       return url;
     }
   };
 
-  // 🕒 Start or resume timer
+  // 🕒 Start timer & play
   const startTimer = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    setCompleted(false);
+    setIsPlaying(true);
+    setRewardEarned(null);
 
-    if (completed) return;
-
-    // If resuming
-    if (isPaused) {
-      setIsPaused(false);
-      setIsPlaying(true);
-    } else {
-      // Starting fresh
-      setCompleted(false);
-      setIsPlaying(true);
-      setRewardEarned(null);
-      setTimeLeft(task.duration);
-    }
-
+    // Force iframe reload with autoplay
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, true);
 
+    // Start countdown
     intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -121,26 +112,12 @@ export default function WatchPlayer({
     }, 1000);
   };
 
-  // ⏸ Pause the video + timer
-  const pauseTimer = () => {
+  // 🛑 Stop timer & pause video
+  const stopTimer = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsPaused(true);
-    setIsPlaying(false);
-
-    // Pause video by removing autoplay
-    if (iframeRef.current) {
-      const currentSrc = iframeRef.current.src.replace("&autoplay=1", "");
-      iframeRef.current.src = currentSrc;
-    }
-  };
-
-  // 🛑 Stop fully (reset)
-  const stopTimer = (resetOnly = false) => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsPaused(false);
+    setTimeLeft(task.duration);
     setIsPlaying(false);
     setCompleted(false);
-    if (!resetOnly) setTimeLeft(task.duration);
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
   };
 
@@ -149,7 +126,7 @@ export default function WatchPlayer({
     if (completed) return;
     setCompleted(true);
     setIsPlaying(false);
-    setIsPaused(false);
+
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
 
     try {
@@ -206,7 +183,8 @@ export default function WatchPlayer({
           allow="autoplay; fullscreen; encrypted-media"
           allowFullScreen
         />
-        {!isPlaying && !isPaused && (
+        {/* Transparent overlay blocks direct play attempts */}
+        {!isPlaying && (
           <div
             className="absolute inset-0 cursor-pointer bg-transparent"
             onClick={() => setShowPlayPopup(true)}
@@ -232,7 +210,7 @@ export default function WatchPlayer({
         <Confetti width={window.innerWidth} height={window.innerHeight} />
       )}
 
-      {/* 🔋 Progress */}
+      {/* 🔋 Progress Bar */}
       <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
         <div
           className="bg-green-500 h-3 rounded transition-all duration-300"
@@ -240,7 +218,7 @@ export default function WatchPlayer({
         />
       </div>
 
-      {/* Stats */}
+      {/* 📊 Stats */}
       <div className="flex justify-between text-sm text-gray-600">
         <span>⏱ {task.duration}s</span>
         <span>🎁 {task.points} pts</span>
@@ -248,26 +226,19 @@ export default function WatchPlayer({
         <span>💰 {userPoints}</span>
       </div>
 
-      {/* 🎮 Controls */}
+      {/* 🎮 Custom Controls */}
       <div className="flex gap-2">
-        {!isPlaying ? (
-          <button
-            onClick={startTimer}
-            className="px-4 py-2 rounded text-white font-semibold bg-green-600 hover:bg-green-700"
-          >
-            {isPaused ? "⏯ Resume" : "▶ Play"}
-          </button>
-        ) : (
-          <button
-            onClick={pauseTimer}
-            className="px-4 py-2 rounded text-white font-semibold bg-yellow-500 hover:bg-yellow-600"
-          >
-            ⏸ Pause
-          </button>
-        )}
-
         <button
-          onClick={() => stopTimer()}
+          onClick={startTimer}
+          disabled={isPlaying}
+          className={`px-4 py-2 rounded text-white font-semibold ${
+            isPlaying ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+          }`}
+        >
+          ▶ Play
+        </button>
+        <button
+          onClick={stopTimer}
           className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-semibold"
         >
           ■ Stop
