@@ -1,8 +1,7 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { LeaderboardContext } from "../context/LeaderboardContext";
-import { getVideoTasks, getSocialTasks, promoteTask } from "../api/tasks";
+import { getVideoTasks, promoteTask } from "../api/tasks";
 import { getPromotionCosts } from "../api/promotion";
 import { Link } from "react-router-dom";
 import {
@@ -15,14 +14,11 @@ import {
 
 export default function Dashboard() {
   const { user, setUser } = useContext(AuthContext);
-  const { leaders = [], fetchLeaderboard = () => {} } =
-    useContext(LeaderboardContext);
-
   const [videos, setVideos] = useState([]);
   const [promotionCosts, setPromotionCosts] = useState({});
   const [loadingTaskId, setLoadingTaskId] = useState(null);
 
-  // Define icon mapping
+  // Social icons
   const ICONS = {
     youtube: <FaYoutube size={24} />,
     facebook: <FaFacebook size={24} />,
@@ -31,13 +27,12 @@ export default function Dashboard() {
     tiktok: <FaTiktok size={24} />,
   };
 
-  // Define promoted card info (videos + actions)
+  // Promoted cards (removed Instagram & Twitter watch)
   const PROMOTED_CARDS = [
     { type: "watch", platform: "youtube", color: "bg-red-600" },
     { type: "watch", platform: "tiktok", color: "bg-pink-600" },
     { type: "watch", platform: "facebook", color: "bg-blue-600" },
-    { type: "watch", platform: "instagram", color: "bg-purple-600" },
-    { type: "watch", platform: "twitter", color: "bg-sky-600" },
+    // Actions (keep Instagram + Twitter)
     { type: "action", platform: "youtube", color: "bg-red-500" },
     { type: "action", platform: "instagram", color: "bg-pink-500" },
     { type: "action", platform: "facebook", color: "bg-blue-500" },
@@ -82,7 +77,6 @@ export default function Dashboard() {
       const res = await promoteTask({ taskId: task._id, type: "video" });
       alert(res.data.message || "Task promoted!");
       setUser((prev) => ({ ...prev, points: res.data.remainingPoints }));
-      fetchLeaderboard();
     } catch (err) {
       console.error(err);
       alert("Failed to promote task");
@@ -92,27 +86,25 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 flex flex-col lg:flex-row gap-6">
-      {/* === MAIN FEED === */}
-      <div className="flex-1 space-y-8">
+    <div className="p-6 flex justify-center">
+      <div className="max-w-6xl w-full space-y-10">
         {/* === Header === */}
-        <header className="mb-4">
-          <h2 className="text-3xl font-bold">
+        <header className="text-center">
+          <h2 className="text-3xl font-bold mb-2">
             Welcome, {user?.username || "User"}!
           </h2>
-          <p className="text-gray-600">Total Points: {user?.points || 0}</p>
+          <p className="text-gray-600 text-lg">
+            Total Points: <span className="font-semibold">{user?.points || 0}</span>
+          </p>
         </header>
-
-        {/* ======= Social Action Quick Links ======= */}
-section
 
         {/* ======= Promoted Tasks Section ======= */}
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">
+          <h2 className="text-2xl font-semibold mb-4 text-center">
             Promoted Tasks & Submissions
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {PROMOTED_CARDS.map((card) => {
               const routeLink =
                 card.type === "watch"
@@ -122,13 +114,16 @@ section
                 card.type === "watch" ? `/submit/${card.platform}` : null;
 
               return (
-                <div key={card.platform + card.type} className="space-y-2">
+                <div
+                  key={card.platform + card.type}
+                  className="space-y-2 flex flex-col items-center"
+                >
                   <Link
                     to={routeLink}
-                    className={`block p-4 rounded shadow text-white ${card.color} hover:opacity-90 transition`}
+                    className={`w-full text-center p-4 rounded-xl shadow-md text-white ${card.color} hover:opacity-90 transition`}
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-bold capitalize">
+                      <h3 className="text-lg font-bold capitalize">
                         {card.platform}{" "}
                         {card.type === "watch" ? "Videos" : "Tasks"}
                       </h3>
@@ -138,7 +133,7 @@ section
                   {submitLink && (
                     <Link
                       to={submitLink}
-                      className="block text-center px-2 py-1 rounded border border-gray-400 hover:bg-gray-100 transition"
+                      className="text-center px-3 py-1 w-full rounded border border-gray-400 hover:bg-gray-100 transition text-sm"
                     >
                       Submit {card.platform} Video
                     </Link>
@@ -149,27 +144,6 @@ section
           </div>
         </section>
       </div>
-
-      {/* === Leaderboard Section === */}
-      <aside className="w-80">
-        <div className="p-4 border rounded shadow-sm bg-white">
-          <h2 className="text-xl font-bold mb-2">Leaderboard</h2>
-          <ul className="divide-y">
-            {leaders.length > 0 ? (
-              leaders.map((u, i) => (
-                <li key={u._id} className="p-3 flex justify-between">
-                  <span>
-                    {i + 1}. {u.username}
-                  </span>
-                  <span className="font-bold">{u.points} pts</span>
-                </li>
-              ))
-            ) : (
-              <li className="p-3 text-gray-500">No leaderboard data yet</li>
-            )}
-          </ul>
-        </div>
-      </aside>
     </div>
   );
 }
