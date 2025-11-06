@@ -1,29 +1,50 @@
-// src/pages/Profile.jsx
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import api from "../api/api";
 
 export default function Profile() {
-  const { user, setUser } = useContext(AuthContext);
+  const { user, updateProfile } = useContext(AuthContext);
   const [editing, setEditing] = useState(false);
   const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
   const [country, setCountry] = useState(user?.country || "");
+  const [profilePicture, setProfilePicture] = useState(user?.profilePicture || "");
+  const [preview, setPreview] = useState(user?.profilePicture || "");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   if (!user) return <div>Loading...</div>;
 
+  // =================== HANDLE FILE CHANGE ===================
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePicture(file);
+      setPreview(URL.createObjectURL(file)); // local preview
+    }
+  };
+
+  // =================== SAVE PROFILE ===================
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await api.put("/auth/update", { username, email, country });
-      setUser(res.data.user); // update context
-      setMessage("Profile updated successfully!");
+      const updatedFields = { username, email, country };
+
+      // if a new image is selected
+      if (profilePicture instanceof File) {
+        updatedFields.profilePicture = profilePicture;
+      }
+
+      const updatedUser = await updateProfile(updatedFields);
+      setMessage("✅ Profile updated successfully!");
       setEditing(false);
+
+      // Update preview after save
+      if (updatedUser?.profilePicture) {
+        setPreview(updatedUser.profilePicture);
+      }
     } catch (err) {
       console.error(err);
-      setMessage("Failed to update profile.");
+      setMessage("❌ Failed to update profile.");
     } finally {
       setSaving(false);
     }
@@ -35,7 +56,32 @@ export default function Profile() {
 
       {message && <p className="mb-4 text-green-600">{message}</p>}
 
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Profile Picture */}
+        <div className="flex flex-col items-center space-y-2">
+          <img
+            src={
+              preview ||
+              "https://res.cloudinary.com/demo/image/upload/v1691234567/default-avatar.png"
+            }
+            alt="Profile"
+            className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+          />
+
+          {editing && (
+            <label className="cursor-pointer bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+              Change Photo
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
+        {/* Username */}
         <div>
           <label className="block font-medium mb-1">Username:</label>
           {editing ? (
@@ -50,6 +96,7 @@ export default function Profile() {
           )}
         </div>
 
+        {/* Email */}
         <div>
           <label className="block font-medium mb-1">Email:</label>
           {editing ? (
@@ -64,6 +111,7 @@ export default function Profile() {
           )}
         </div>
 
+        {/* Country */}
         <div>
           <label className="block font-medium mb-1">Country:</label>
           {editing ? (
@@ -78,17 +126,20 @@ export default function Profile() {
           )}
         </div>
 
+        {/* Role */}
         <div>
           <label className="block font-medium mb-1">Role:</label>
           <p>{user.role}</p>
         </div>
 
+        {/* Points */}
         <div>
           <label className="block font-medium mb-1">Points:</label>
           <p>{user.points}</p>
         </div>
       </div>
 
+      {/* Buttons */}
       <div className="mt-6 flex gap-3">
         {editing ? (
           <>
@@ -105,6 +156,8 @@ export default function Profile() {
                 setUsername(user.username);
                 setEmail(user.email);
                 setCountry(user.country);
+                setPreview(user.profilePicture);
+                setMessage("");
               }}
               className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
             >
