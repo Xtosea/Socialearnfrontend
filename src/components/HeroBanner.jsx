@@ -27,12 +27,12 @@ export default function HeroBanner() {
         <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
           Welcome To Trend Watch Social Media Promotion. <br />
            </h1>
-           <h2>
-           <span className="text-yellow-300">Grow Your Videos, Grow Your Fan Base. Level Up Your Social Media Engagement🌍</span>
+           <h2
+           span className="text-yellow-300">Grow Your Videos, Grow Your Fan Base. Level Up Your Social Media Engagement🌍</span>
         </h2>
 
         <p className="text-lg md:text-xl text-indigo-100 mb-8 leading-relaxed">
-         If you are a content creator, supercharge your social media videos and engagement. Promote your own content and watch your social media blows up! Turn every view into viral growth faster-more views, more page likes and followers, more YouTube channel subscriptions more fans
+         If you are a content creator, supercharge your social media videos and engagement. Promote your own content and watch your social media blows up! Turn every view into viral growth faster-more views, more page likes and followers, more YouTube channel subscriptions, more fans. <br/>
           Join the fastest-growing social earning community today.
         </p>
 
