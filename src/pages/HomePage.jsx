@@ -77,12 +77,7 @@ export default function HomePage() {
         visible ? "opacity-100" : "opacity-0"
       }`}
     >
-      {/* 🔝 Monetag Banner Ad */}
-      <MonetagBanner zoneId="10135767" />
-
-      {/* 🌟 Hero Section */}
-      <HeroBanner />
-
+      
       {/* 💡 Growth Section */}
       <GrowSection />
 
