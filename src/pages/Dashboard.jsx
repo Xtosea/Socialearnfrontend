@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { getVideoTasks, promoteTask } from "../api/tasks";
 import { getPromotionCosts } from "../api/promotion";
 import { Link } from "react-router-dom";
+import api from "../api/api"; // ✅ Make sure this is imported
 import {
   FaYoutube,
   FaFacebook,
@@ -92,28 +93,6 @@ export default function Dashboard() {
             Total Points:{" "}
             <span className="font-semibold">{user?.points || 0}</span>
           </p>
-
-          <button
-  onClick={async () => {
-    try {
-      // Reward the user
-      const res = await api.post("/users/reward-trendwatch");
-      alert(res.data.message);
-
-      // Update points in AuthContext
-      setUser((prev) => ({ ...prev, points: res.data.newPoints }));
-
-      // Redirect to your referral link
-      window.open("https://otieu.com/4/10153446", "_blank");
-    } catch (err) {
-      console.error(err);
-      window.open("https://otieu.com/4/10153446", "_blank");
-    }
-  }}
-  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
->
-  🎁 Earn More Points on Trend Watch and Promote your social media videos
-</button>
         </header>
 
         {/* ======= Promoted Tasks Section ======= */}
@@ -138,7 +117,6 @@ export default function Dashboard() {
                   key={card.platform + card.type}
                   className="space-y-3 flex flex-col items-center"
                 >
-                  {/* Main Card */}
                   <Link
                     to={routeLink}
                     className={`w-full text-center p-4 rounded-xl shadow-md text-white ${card.color} hover:scale-105 transition-transform`}
@@ -156,12 +134,10 @@ export default function Dashboard() {
                     </div>
                   </Link>
 
-                  {/* Description */}
                   <p className="text-xs text-gray-600 text-center px-2">
                     {card.description}
                   </p>
 
-                  {/* Submit Link */}
                   <Link
                     to={submitLink}
                     className="text-center px-3 py-1 w-full rounded border border-gray-400 hover:bg-gray-100 transition text-sm"
@@ -174,6 +150,26 @@ export default function Dashboard() {
             })}
           </div>
         </section>
+
+        {/* 🌟 Trend Watch Referral Bonus at the Bottom */}
+        <div className="text-center mt-10">
+          <button
+            onClick={async () => {
+              try {
+                const res = await api.post("/users/reward-trendwatch");
+                alert(res.data.message);
+                setUser((prev) => ({ ...prev, points: res.data.newPoints }));
+                window.open("https://otieu.com/4/10153446", "_blank");
+              } catch (err) {
+                console.error(err);
+                window.open("https://otieu.com/4/10153446", "_blank");
+              }
+            }}
+            className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition font-semibold shadow-md"
+          >
+            🎁 Bonus Offer: Earn +20 Points by Visiting Trend Watch & Promote Your Videos
+          </button>
+        </div>
       </div>
     </div>
   );
