@@ -30,6 +30,7 @@ const AdminPanel = () => {
       setUsers(res.data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to fetch users");
     }
   };
 
@@ -43,6 +44,7 @@ const AdminPanel = () => {
       setWallet(res.data.points);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to fetch wallet");
     } finally {
       setLoadingWallet(false);
     }
@@ -55,9 +57,12 @@ const AdminPanel = () => {
       const res = await api.get("/admin/tasks", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTasks(res.data);
+      console.log("Tasks fetched:", res.data); // Debug
+      setTasks(res.data || []);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to fetch tasks");
+      setTasks([]);
     } finally {
       setLoadingTasks(false);
     }
@@ -69,13 +74,13 @@ const AdminPanel = () => {
     fetchTasks();
 
     // Socket.IO
-    const socket = io("http://localhost:5000");
+    const socket = io("http://localhost:5000"); // Replace with local IP if needed
 
     socket.on("walletUpdated", ({ userId, balance }) => {
       setUsers((prev) =>
         prev.map((u) => (u._id === userId ? { ...u, points: balance } : u))
       );
-      if (userId === selectedUser) setWallet(balance);
+      if (selectedUser === userId) setWallet(balance);
     });
 
     socket.on("userDeleted", ({ userId }) => {
@@ -267,12 +272,7 @@ const AdminPanel = () => {
           {users.map((u) => (
             <div key={u._id} className="flex justify-between items-center bg-white p-2 border rounded">
               <span>{u.username} — {u.points} pts</span>
-              <button
-                onClick={() => handleDeleteUser(u._id)}
-                className="bg-red-500 text-white px-3 py-1 rounded"
-              >
-                Delete User
-              </button>
+              <button onClick={() => handleDeleteUser(u._id)} className="bg-red-500 text-white px-3 py-1 rounded">Delete User</button>
             </div>
           ))}
         </div>
@@ -289,13 +289,8 @@ const AdminPanel = () => {
           <div className="space-y-1">
             {tasks.map((t) => (
               <div key={t._id} className="flex justify-between items-center bg-white p-2 border rounded">
-                <span>{t.title}</span>
-                <button
-                  onClick={() => handleDeleteTask(t._id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete Task
-                </button>
+                <span>{t.title || t.name || t.taskTitle}</span>
+                <button onClick={() => handleDeleteTask(t._id)} className="bg-red-500 text-white px-3 py-1 rounded">Delete Task</button>
               </div>
             ))}
           </div>
@@ -313,12 +308,7 @@ const AdminPanel = () => {
             onChange={(e) => setLeaderboardAmount(e.target.value)}
             className="border p-2 flex-1"
           />
-          <button
-            onClick={rewardLeaderboard}
-            className="bg-purple-500 text-white px-4 py-2 rounded"
-          >
-            Reward Top 3
-          </button>
+          <button onClick={rewardLeaderboard} className="bg-purple-500 text-white px-4 py-2 rounded">Reward Top 3</button>
         </div>
       </div>
     </div>
