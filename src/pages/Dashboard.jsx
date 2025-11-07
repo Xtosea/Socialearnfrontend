@@ -93,17 +93,27 @@ export default function Dashboard() {
             <span className="font-semibold">{user?.points || 0}</span>
           </p>
 
-          {/* 🌟 Trend Watch Referral Button */}
-          <div className="mt-6">
-            <a
-              href="https://otieu.com/4/10153446"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-            >
-              🎁 Earn More Points on Trend Watch and Promote your social media videos
-            </a>
-          </div>
+          <button
+  onClick={async () => {
+    try {
+      // Reward the user
+      const res = await api.post("/users/reward-trendwatch");
+      alert(res.data.message);
+
+      // Update points in AuthContext
+      setUser((prev) => ({ ...prev, points: res.data.newPoints }));
+
+      // Redirect to your referral link
+      window.open("https://otieu.com/4/10153446", "_blank");
+    } catch (err) {
+      console.error(err);
+      window.open("https://otieu.com/4/10153446", "_blank");
+    }
+  }}
+  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+>
+  🎁 Earn More Points on Trend Watch and Promote your social media videos
+</button>
         </header>
 
         {/* ======= Promoted Tasks Section ======= */}
