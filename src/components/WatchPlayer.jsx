@@ -16,10 +16,10 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
 
   const socketRef = useRef(null);
   const countdownRef = useRef(null);
-  const playerRef = useRef(null); // For YouTube API
-  const youtubeContainerRef = useRef(null);
+  const playerRef = useRef(null);
+  const youtubeReadyRef = useRef(false);
 
-  // Connect socket
+  // ---------------- Socket connection ----------------
   useEffect(() => {
     socketRef.current = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000");
     socketRef.current.emit("joinRoom", user._id);
@@ -29,7 +29,7 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
     return () => socketRef.current.disconnect();
   }, [user._id, setUserPoints]);
 
-  // Reset task
+  // ---------------- Reset on task change ----------------
   useEffect(() => {
     setTimeLeft(task.duration);
     setCompleted(false);
@@ -41,40 +41,47 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
       document.body.appendChild(tag);
+
+      window.onYouTubeIframeAPIReady = () => {
+        youtubeReadyRef.current = true;
+      };
+    } else if (window.YT) {
+      youtubeReadyRef.current = true;
     }
 
     return () => clearInterval(countdownRef.current);
   }, [task]);
 
-  // Reward function
+  // ---------------- Reward function ----------------
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
     setIsPlaying(false);
 
-    // Stop YouTube video if exists
-    if (playerRef.current?.pauseVideo) playerRef.current.pauseVideo();
+    // Stop YouTube if playing
+    if (playerRef.current && task.url.includes("youtube")) playerRef.current.pauseVideo();
 
     try {
       const res = await api.post(`/tasks/watch/${task._id}/complete`);
       const earned = res?.data?.rewardPoints || task.points || 0;
       const newBalance = res?.data?.newBalance ?? userPoints + earned;
+
       setUserPoints(newBalance);
       socketRef.current.emit("walletUpdate", { userId: user._id, balance: newBalance });
 
+      // Reward visuals
       setRewardEarned(earned);
       setShowRewardPopup(true);
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
       setTimeout(() => setShowRewardPopup(false), 3500);
-
       if (goToNextTask) setTimeout(goToNextTask, 4000);
     } catch (err) {
-      console.error(err);
+      console.error("Error completing watch:", err);
     }
   };
 
-  // Start countdown
+  // ---------------- Start countdown ----------------
   const startCountdown = () => {
     if (isPlaying) return;
     setIsPlaying(true);
@@ -91,29 +98,28 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
     }, 1000);
   };
 
-  // Render video
+  // ---------------- Render video ----------------
   const renderVideo = () => {
-    // --- YouTube ---
+    // YouTube
     if (task.url.includes("youtube.com") || task.url.includes("youtu.be")) {
-      const videoId = task.url.includes("youtu.be") ? task.url.split("/").pop() : new URL(task.url).searchParams.get("v");
+      const id = task.url.includes("youtu.be")
+        ? task.url.split("/").pop()
+        : new URL(task.url).searchParams.get("v");
 
       return (
         <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
-          <div ref={youtubeContainerRef} id="youtube-player" className="absolute top-0 left-0 w-full h-full" />
+          <div id={`youtube-player-${task._id}`} className="absolute top-0 left-0 w-full h-full" />
           {!isPlaying && (
             <button
               onClick={() => {
-                if (!window.YT) return; // API not loaded yet
-                playerRef.current = new window.YT.Player("youtube-player", {
-                  videoId,
+                if (!youtubeReadyRef.current) return alert("YouTube API loading, try again...");
+                playerRef.current = new window.YT.Player(`youtube-player-${task._id}`, {
+                  videoId: id,
                   events: {
                     onStateChange: (e) => {
                       if (e.data === window.YT.PlayerState.PLAYING) startCountdown();
+                      if (e.data === window.YT.PlayerState.ENDED) handleCompleteWatch();
                       if (e.data === window.YT.PlayerState.PAUSED) clearInterval(countdownRef.current);
-                      if (e.data === window.YT.PlayerState.ENDED) {
-                        clearInterval(countdownRef.current);
-                        handleCompleteWatch();
-                      }
                     },
                   },
                   playerVars: { autoplay: 1, controls: 1, modestbranding: 1 },
@@ -129,7 +135,7 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
       );
     }
 
-    // --- TikTok, FB, IG fallback ---
+    // TikTok, Facebook, Instagram (generic iframe)
     return (
       <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
         <iframe
