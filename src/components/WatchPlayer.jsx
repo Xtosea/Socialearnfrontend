@@ -1,4 +1,3 @@
-// src/components/WatchPlayer.jsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import Confetti from "react-confetti";
 import api from "../api/api";
@@ -22,6 +21,7 @@ export default function WatchPlayer({
   const [rewardEarned, setRewardEarned] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showRewardPopup, setShowRewardPopup] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // 🔌 Socket connection
   useEffect(() => {
@@ -38,13 +38,18 @@ export default function WatchPlayer({
   useEffect(() => {
     setTimeLeft(task.duration);
     setCompleted(false);
-    // Reload video in paused state
+    setIsPlaying(false);
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
 
-    // Clear any previous countdown
     if (countdownRef.current) clearInterval(countdownRef.current);
+  }, [task]);
 
-    // Start countdown
+  // 🕹 Start playing video
+  const handlePlay = () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+
+    // Start timer
     countdownRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -56,15 +61,16 @@ export default function WatchPlayer({
       });
     }, 1000);
 
-    return () => clearInterval(countdownRef.current);
-  }, [task]);
+    // Start video
+    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, true);
+  };
 
   // 🎯 Complete + Reward + stop video
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
+    setIsPlaying(false);
 
-    // Stop the iframe video
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
 
     try {
@@ -83,6 +89,7 @@ export default function WatchPlayer({
       setTimeout(() => setShowConfetti(false), 3000);
       setTimeout(() => setShowRewardPopup(false), 3500);
 
+      // ✅ Auto-next after 4s
       if (goToNextTask) setTimeout(goToNextTask, 4000);
     } catch (err) {
       console.error("Error completing watch:", err);
@@ -122,12 +129,20 @@ export default function WatchPlayer({
         <iframe
           ref={iframeRef}
           className="absolute top-0 left-0 w-full h-full"
-          src={getEmbedUrl(task.url, true)}
+          src={getEmbedUrl(task.url, false)}
           title="Watch Player"
           frameBorder="0"
           allow="autoplay; fullscreen; encrypted-media"
           allowFullScreen
         />
+        {!isPlaying && (
+          <div
+            className="absolute inset-0 cursor-pointer bg-black/20 flex items-center justify-center text-white font-bold text-xl rounded-lg"
+            onClick={handlePlay}
+          >
+            ▶ Play
+          </div>
+        )}
       </div>
 
       {/* 💬 "Watch to earn" */}
