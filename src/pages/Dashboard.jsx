@@ -18,7 +18,6 @@ export default function Dashboard() {
   const [promotionCosts, setPromotionCosts] = useState({});
   const [loadingTaskId, setLoadingTaskId] = useState(null);
 
-  // Social icons
   const ICONS = {
     youtube: <FaYoutube size={24} />,
     facebook: <FaFacebook size={24} />,
@@ -27,62 +26,17 @@ export default function Dashboard() {
     tiktok: <FaTiktok size={24} />,
   };
 
-  // Define promoted cards
   const PROMOTED_CARDS = [
-    // ===== Watch Type =====
-    {
-      type: "watch",
-      platform: "youtube",
-      color: "bg-red-600",
-      description: "Paste your YouTube video URL for promotion",
-    },
-    {
-      type: "watch",
-      platform: "facebook",
-      color: "bg-blue-600",
-      description: "Paste your Facebook video URL for promotion",
-    },
-    {
-      type: "watch",
-      platform: "tiktok",
-      color: "bg-pink-600",
-      description: "Paste your TikTok video URL for promotion",
-    },
-
-    // ===== Action Type =====
-    {
-      type: "action",
-      platform: "youtube",
-      color: "bg-red-500",
-      description: "Paste your YouTube channel URL for promotion",
-    },
-    {
-      type: "action",
-      platform: "facebook",
-      color: "bg-blue-500",
-      description: "Paste your Facebook page URL for promotion",
-    },
-    {
-      type: "action",
-      platform: "tiktok",
-      color: "bg-purple-500",
-      description: "Paste your TikTok page URL for promotion",
-    },
-    {
-      type: "action",
-      platform: "twitter",
-      color: "bg-sky-500",
-      description: "Paste your Twitter page URL for promotion",
-    },
-    {
-      type: "action",
-      platform: "instagram",
-      color: "bg-pink-500",
-      description: "Paste your Instagram page URL for promotion",
-    },
+    { type: "watch", platform: "youtube", color: "bg-red-600", description: "Paste your YouTube video URL for promotion" },
+    { type: "watch", platform: "facebook", color: "bg-blue-600", description: "Paste your Facebook video URL for promotion" },
+    { type: "watch", platform: "tiktok", color: "bg-pink-600", description: "Paste your TikTok video URL for promotion" },
+    { type: "action", platform: "youtube", color: "bg-red-500", description: "Paste your YouTube channel URL for promotion" },
+    { type: "action", platform: "facebook", color: "bg-blue-500", description: "Paste your Facebook page URL for promotion" },
+    { type: "action", platform: "tiktok", color: "bg-purple-500", description: "Paste your TikTok page URL for promotion" },
+    { type: "action", platform: "twitter", color: "bg-sky-500", description: "Paste your Twitter page URL for promotion" },
+    { type: "action", platform: "instagram", color: "bg-pink-500", description: "Paste your Instagram page URL for promotion" },
   ];
 
-  // Fetch dashboard data
   const fetchData = async () => {
     try {
       const videoTasks = await getVideoTasks();
@@ -101,7 +55,6 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle promotion logic
   const handlePromote = async (task) => {
     if (!user) return;
     let cost =
@@ -139,6 +92,18 @@ export default function Dashboard() {
             Total Points:{" "}
             <span className="font-semibold">{user?.points || 0}</span>
           </p>
+
+          {/* 🌟 Trend Watch Referral Button */}
+          <div className="mt-6">
+            <a
+              href="https://otieu.com/4/10153446"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+            >
+              🎁 Earn More Points on Trend Watch and Promote your social media videos
+            </a>
+          </div>
         </header>
 
         {/* ======= Promoted Tasks Section ======= */}
