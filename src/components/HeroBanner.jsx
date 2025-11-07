@@ -25,13 +25,13 @@ export default function HeroBanner() {
         className="relative z-10 max-w-3xl mx-auto"
       >
         <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
-          Earn Points, Boost Your Reach, <br />
-          and <span className="text-yellow-300">Grow Your Influence 🌍</span>
+          Welcome To Trend Watch Social Media Promotion, <br />
+          and <span className="text-yellow-300">Grow Your Videos, Grow Your Fan Base. Level Up Your Social Media Engagement🌍</span>
         </h1>
 
         <p className="text-lg md:text-xl text-indigo-100 mb-8 leading-relaxed">
-          Watch videos, complete social tasks, and promote your own content — all while
-          earning real rewards. Join the fastest-growing social earning community today.
+         If you are a content creator, supercharge your social media videos and engagement. Promote your own content and watch your social media blows up! Turn every view into viral growth faster-more views, more page likes and followers, more YouTube channel subscriptions more fans
+          Join the fastest-growing social earning community today.
         </p>
 
         <div className="flex flex-col sm:flex-row justify-center gap-4">
