@@ -1,3 +1,4 @@
+// src/components/WatchPlayer.jsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import Confetti from "react-confetti";
 import api from "../api/api";
@@ -9,90 +10,39 @@ export default function WatchPlayer({
   refreshTasks,
   userPoints,
   setUserPoints,
-  goToNextTask, // 👈 parent should pass this from PromotedWatchTasks
+  goToNextTask,
 }) {
   const { user } = useContext(AuthContext);
-  const intervalRef = useRef(null);
-  const autoNextRef = useRef(null);
-  const audioRef = useRef(null);
   const iframeRef = useRef(null);
-  const cleanupTimeoutsRef = useRef([]);
   const socketRef = useRef(null);
-
   const [timeLeft, setTimeLeft] = useState(task.duration);
   const [completed, setCompleted] = useState(false);
-  const [rewardFlash, setRewardFlash] = useState(false);
+  const [rewardEarned, setRewardEarned] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showRewardPopup, setShowRewardPopup] = useState(false);
-  const [rewardEarned, setRewardEarned] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showPlayPopup, setShowPlayPopup] = useState(false);
 
-  // 🔌 Connect socket
+  // 🔌 Socket connection
   useEffect(() => {
     socketRef.current = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000");
     socketRef.current.emit("joinRoom", user._id);
-
     socketRef.current.on("walletUpdated", ({ userId, balance }) => {
       if (userId === user._id) setUserPoints(balance);
     });
 
-    return () => {
-      socketRef.current.disconnect();
-    };
+    return () => socketRef.current.disconnect();
   }, [user._id, setUserPoints]);
 
-  // 🧹 Cleanup
+  // 🔄 Reset on task change
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (autoNextRef.current) clearTimeout(autoNextRef.current);
-      cleanupTimeoutsRef.current.forEach((t) => clearTimeout(t));
-    };
-  }, []);
-
-  // 🔄 Reset timer when task changes
-  useEffect(() => {
-    stopTimer();
     setTimeLeft(task.duration);
+    setCompleted(false);
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
   }, [task]);
 
-  // 🕒 Timer logic
-  const startTimer = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setCompleted(false);
-    setRewardEarned(null);
-    setIsPlaying(true);
-
-    intervalRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          handleCompleteWatch();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, true);
-  };
-
-  const stopTimer = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setTimeLeft(task.duration);
-    setCompleted(false);
-    setIsPlaying(false);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
-  };
-
-  // 🎯 Complete + Reward + Auto-next
+  // 🎯 Complete + Reward
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
-    setIsPlaying(false);
-    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
 
     try {
       const res = await api.post(`/tasks/watch/${task._id}/complete`);
@@ -105,23 +55,12 @@ export default function WatchPlayer({
       // 🎉 Reward visuals
       setRewardEarned(earned);
       setShowRewardPopup(true);
-      setRewardFlash(true);
       setShowConfetti(true);
-      audioRef.current?.play();
 
-      const t1 = setTimeout(() => setRewardFlash(false), 2000);
-      const t2 = setTimeout(() => setShowConfetti(false), 3000);
-      const t3 = setTimeout(() => setShowRewardPopup(false), 3500);
-      cleanupTimeoutsRef.current.push(t1, t2, t3);
+      setTimeout(() => setShowConfetti(false), 3000);
+      setTimeout(() => setShowRewardPopup(false), 3500);
 
-      // ✅ Auto next video after popup
-      autoNextRef.current = setTimeout(() => {
-        if (goToNextTask) goToNextTask(); // move to next
-        setTimeout(() => {
-          const playBtn = document.querySelector("button.bg-green-600");
-          playBtn?.click();
-        }, 1500);
-      }, 4000);
+      if (goToNextTask) setTimeout(goToNextTask, 4000);
     } catch (err) {
       console.error("Error completing watch:", err);
     }
@@ -133,50 +72,55 @@ export default function WatchPlayer({
     try {
       if (url.includes("youtube.com")) {
         const id = new URL(url).searchParams.get("v");
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
+        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&autoplay=${autoplay ? 1 : 0}`;
       } else if (url.includes("youtu.be")) {
         const id = url.split("/").pop();
-        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&controls=0`;
+        embedUrl = `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0&playsinline=1&autoplay=${autoplay ? 1 : 0}`;
       } else if (url.includes("tiktok.com")) {
         embedUrl = url.replace("/video/", "/embed/v2/");
+        if (autoplay) embedUrl += "?autoplay=1";
       } else if (url.includes("facebook.com") || url.includes("fb.watch")) {
-        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
+        embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=${autoplay ? 1 : 0}`;
       } else if (url.includes("instagram.com")) {
         embedUrl = `${url}embed`;
       } else {
         embedUrl = url;
       }
-      if (autoplay) embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
     } catch {
       embedUrl = url;
     }
     return embedUrl;
   };
 
-  const progressPercent = ((task.duration - timeLeft) / task.duration) * 100;
-
   return (
     <div className="relative border p-4 rounded-lg shadow space-y-3 bg-white">
       {/* 🎥 Video */}
-<div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
-  <iframe
-    ref={iframeRef}
-    className="absolute top-0 left-0 w-full h-full"
-    src={getEmbedUrl(task.url, false)}
-    title="Reel Player"
-    frameBorder="0"
-    allow="autoplay; fullscreen; encrypted-media"
-    allowFullScreen
-  />
-  {!isPlaying && (
-    <div
-      className="absolute inset-0 cursor-pointer bg-transparent"
-      onClick={() => setShowPlayPopup(true)}
-    />
-  )}
-</div>
+      <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
+        <iframe
+          ref={iframeRef}
+          className="absolute top-0 left-0 w-full h-full"
+          src={getEmbedUrl(task.url, true)}
+          title="Watch Player"
+          frameBorder="0"
+          allow="autoplay; fullscreen; encrypted-media"
+          allowFullScreen
+          onLoad={() => {
+            // Start a countdown for points
+            const countdown = setInterval(() => {
+              setTimeLeft(prev => {
+                if (prev <= 1) {
+                  clearInterval(countdown);
+                  handleCompleteWatch();
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+          }}
+        />
+      </div>
 
-      {/* 💬 "Watch to earn" text */}
+      {/* 💬 "Watch to earn" */}
       <div className="text-center text-sm font-semibold text-green-700 bg-green-50 py-2 rounded-lg">
         🎯 Watch this video and earn +{task.points} points!
       </div>
@@ -185,7 +129,7 @@ export default function WatchPlayer({
       {showRewardPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50 pointer-events-none">
           <div className="bg-green-500 text-white text-lg font-bold px-6 py-4 rounded-xl shadow-lg animate-bounce">
-            🎉 You earned +{rewardEarned ?? task.points} points for watching this video!
+            🎉 You earned +{rewardEarned ?? task.points} points!
           </div>
         </div>
       )}
@@ -196,7 +140,7 @@ export default function WatchPlayer({
       <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
         <div
           className="bg-green-500 h-3 rounded transition-all duration-300"
-          style={{ width: `${progressPercent}%` }}
+          style={{ width: `${((task.duration - timeLeft) / task.duration) * 100}%` }}
         />
       </div>
 
@@ -207,27 +151,6 @@ export default function WatchPlayer({
         <span>🕒 {timeLeft}s left</span>
         <span>💰 Total: {userPoints}</span>
       </div>
-
-      {/* 🎮 Controls */}
-      <div className="flex gap-2">
-        <button
-          onClick={startTimer}
-          disabled={isPlaying}
-          className={`px-4 py-2 rounded text-white font-semibold ${
-            isPlaying ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          ▶ Play
-        </button>
-        <button
-          onClick={stopTimer}
-          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-semibold"
-        >
-          ■ Stop
-        </button>
-      </div>
-
-      <audio ref={audioRef} src="/sounds/reward-sound.mp3" preload="auto" />
     </div>
   );
 }
