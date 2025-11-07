@@ -17,6 +17,7 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
   const socketRef = useRef(null);
   const countdownRef = useRef(null);
   const playerRef = useRef(null);
+  const youtubeContainerRef = useRef(null);
 
   // Load YouTube IFrame API once
   useEffect(() => {
@@ -25,7 +26,6 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
       tag.src = "https://www.youtube.com/iframe_api";
       document.body.appendChild(tag);
     }
-
     window.onYouTubeIframeAPIReady = () => {
       setYTReady(true);
     };
@@ -47,10 +47,14 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
     setCompleted(false);
     setIsPlaying(false);
     clearInterval(countdownRef.current);
-    playerRef.current = null;
+
+    // Destroy previous player
+    if (playerRef.current && playerRef.current.destroy) {
+      playerRef.current.destroy();
+      playerRef.current = null;
+    }
   }, [task]);
 
-  // Reward
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
@@ -75,7 +79,6 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
     }
   };
 
-  // Start countdown
   const startCountdown = () => {
     if (isPlaying) return;
     setIsPlaying(true);
@@ -91,45 +94,45 @@ export default function WatchPlayer({ task, userPoints, setUserPoints, goToNextT
     }, 1000);
   };
 
-  const renderVideo = () => {
-    if (task.url.includes("youtube.com") || task.url.includes("youtu.be")) {
-      if (!YTReady) return <div>Loading YouTube player...</div>;
-      const id = task.url.includes("youtu.be") ? task.url.split("/").pop() : new URL(task.url).searchParams.get("v");
+  const renderYouTubePlayer = () => {
+    const id = task.url.includes("youtu.be") ? task.url.split("/").pop() : new URL(task.url).searchParams.get("v");
 
-      return (
-        <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
-          <div id="youtube-player" className="absolute top-0 left-0 w-full h-full" />
-          {!isPlaying && (
-            <button
-              onClick={() => {
-                if (!playerRef.current) {
-                  playerRef.current = new window.YT.Player("youtube-player", {
-                    videoId: id,
-                    events: {
-                      onStateChange: (e) => {
-                        if (e.data === window.YT.PlayerState.PLAYING) startCountdown();
-                        if (e.data === window.YT.PlayerState.PAUSED) clearInterval(countdownRef.current);
-                        if (e.data === window.YT.PlayerState.ENDED) handleCompleteWatch();
-                      },
+    return (
+      <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
+        <div ref={youtubeContainerRef} className="absolute top-0 left-0 w-full h-full" />
+        {!isPlaying && YTReady && (
+          <button
+            onClick={() => {
+              if (!playerRef.current) {
+                playerRef.current = new window.YT.Player(youtubeContainerRef.current, {
+                  videoId: id,
+                  events: {
+                    onStateChange: (e) => {
+                      if (e.data === window.YT.PlayerState.PLAYING) startCountdown();
+                      if (e.data === window.YT.PlayerState.PAUSED) clearInterval(countdownRef.current);
+                      if (e.data === window.YT.PlayerState.ENDED) handleCompleteWatch();
                     },
-                    playerVars: { autoplay: 1, controls: 1, modestbranding: 1 },
-                  });
-                } else {
-                  playerRef.current.playVideo();
-                  startCountdown();
-                }
-                setIsPlaying(true);
-              }}
-              className="absolute inset-0 bg-black/40 text-white text-2xl font-bold flex items-center justify-center rounded-lg hover:bg-black/30"
-            >
-              ▶ Play
-            </button>
-          )}
-        </div>
-      );
-    }
+                  },
+                  playerVars: { autoplay: 1, controls: 1, modestbranding: 1 },
+                });
+              } else {
+                playerRef.current.playVideo();
+                startCountdown();
+              }
+              setIsPlaying(true);
+            }}
+            className="absolute inset-0 bg-black/40 text-white text-2xl font-bold flex items-center justify-center rounded-lg hover:bg-black/30"
+          >
+            ▶ Play
+          </button>
+        )}
+        {!YTReady && <div className="absolute inset-0 flex items-center justify-center text-white text-lg">Loading YouTube...</div>}
+      </div>
+    );
+  };
 
-    // Generic iframe fallback
+  const renderVideo = () => {
+    if (task.url.includes("youtube.com") || task.url.includes("youtu.be")) return renderYouTubePlayer();
     return (
       <div className="relative w-full pb-[177.78%] h-0 overflow-hidden rounded-lg">
         <iframe
