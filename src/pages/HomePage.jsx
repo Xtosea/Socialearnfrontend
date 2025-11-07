@@ -77,7 +77,14 @@ export default function HomePage() {
         visible ? "opacity-100" : "opacity-0"
       }`}
     >
-      
+
+      {/* 🔝 Monetag Banner Ad */}
+      <MonetagBanner zoneId="10135767" />
+
+      {/* 🌟 Hero Section */}
+      <HeroBanner />
+
+
       {/* 💡 Growth Section */}
       <GrowSection />
 
@@ -89,7 +96,7 @@ export default function HomePage() {
           <Card className="shadow-lg border-none rounded-2xl bg-white/80 backdrop-blur-md">
             <CardHeader className="text-center space-y-2">
               <h1 className="text-3xl font-extrabold text-indigo-700 tracking-tight">
-                Welcome to Trend Watch 🎉
+                Welcome to Trend Watch Social Media Promoting 🎉
               </h1>
             </CardHeader>
 
@@ -100,7 +107,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 text-indigo-600">
                   <Sparkles className="w-6 h-6" />
                   <h2 className="text-xl font-bold">
-                    Join Our Community Today— Completely Free! You Don't Pay A Dime To Boost Rour Reach 
+                    Join Trend Watch Social Media Promoting Community Today— Completely Free! You Don't Pay A Dime To Boost Rour Reach 
                   </h2>
                 </div>
 
@@ -112,8 +119,8 @@ export default function HomePage() {
                   </li>
                   <li>
                     <strong>Promote your social media pages, videos and engagements</strong>{" "}
-                    by pasting your YouTube, TikTok, Instagram, or Facebook video URLs directly
-                    into the promotion form. Choose how many video views or engagements you want — all for free.
+                    by just pasting your YouTube, TikTok, Instagram, or Facebook video URLs directly
+                    in the promotion form. You can choose how many video views or numbers engagement you want — all for free.
                   </li>
                   <li>
                     <strong>Engage with others</strong> — like, follow, comment, or share
@@ -197,9 +204,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 w-full z-50">
-        <MonetagSmartTag />
-      </div>
+      
 
       <Footer />
     </div>
