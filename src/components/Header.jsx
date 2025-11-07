@@ -22,7 +22,7 @@ export default function Header() {
           {/* 🧾 Site Name and Tagline */}
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-indigo-700">
-              Social-Earn
+              Trend Watch Social Media Promoting 
             </h1>
             <p className="text-xs text-gray-500 -mt-1">
               Watch. Engage. Earn. 🎯
