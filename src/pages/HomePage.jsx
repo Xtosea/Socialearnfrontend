@@ -22,7 +22,7 @@ import HeroBanner from "../components/HeroBanner";
 import GrowSection from "../components/GrowSection";
 import Footer from "../components/Footer";
 import MonetagBanner from "../components/ads/MonetagBanner";
-import MonetagSmartTag from "../components/ads/MonetagSmartTag";
+//import MonetagSmartTag from "../components/ads/MonetagSmartTag";
 
 export default function HomePage() {
   const navigate = useNavigate();
