@@ -15,6 +15,8 @@ export default function WatchPlayer({
   const { user } = useContext(AuthContext);
   const iframeRef = useRef(null);
   const socketRef = useRef(null);
+  const countdownRef = useRef(null);
+
   const [timeLeft, setTimeLeft] = useState(task.duration);
   const [completed, setCompleted] = useState(false);
   const [rewardEarned, setRewardEarned] = useState(null);
@@ -36,13 +38,34 @@ export default function WatchPlayer({
   useEffect(() => {
     setTimeLeft(task.duration);
     setCompleted(false);
+    // Reload video in paused state
     if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
+
+    // Clear any previous countdown
+    if (countdownRef.current) clearInterval(countdownRef.current);
+
+    // Start countdown
+    countdownRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current);
+          handleCompleteWatch();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(countdownRef.current);
   }, [task]);
 
-  // 🎯 Complete + Reward
+  // 🎯 Complete + Reward + stop video
   const handleCompleteWatch = async () => {
     if (completed) return;
     setCompleted(true);
+
+    // Stop the iframe video
+    if (iframeRef.current) iframeRef.current.src = getEmbedUrl(task.url, false);
 
     try {
       const res = await api.post(`/tasks/watch/${task._id}/complete`);
@@ -104,19 +127,6 @@ export default function WatchPlayer({
           frameBorder="0"
           allow="autoplay; fullscreen; encrypted-media"
           allowFullScreen
-          onLoad={() => {
-            // Start a countdown for points
-            const countdown = setInterval(() => {
-              setTimeLeft(prev => {
-                if (prev <= 1) {
-                  clearInterval(countdown);
-                  handleCompleteWatch();
-                  return 0;
-                }
-                return prev - 1;
-              });
-            }, 1000);
-          }}
         />
       </div>
 
