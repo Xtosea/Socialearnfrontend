@@ -39,7 +39,7 @@ export default function Layout() {
             onClick={() => setSidebarOpen(false)}
           >
             <Rocket className="w-6 h-6 text-blue-600" />
-            Social-Earn
+           Trendwatch Social Media Promotion 
           </Link>
           <button
             className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow"
