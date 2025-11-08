@@ -33,7 +33,7 @@ export default function Navbar({ toggleSidebar }) {
 
       <div className="flex items-center space-x-4">
         <Link to="/" className="text-xl font-bold text-blue-600">
-          Social-Earn
+    Trend Watch Social Media Promotion 
         </Link>
         {currentTitle && (
           <span className="text-gray-600 text-lg">/ {currentTitle}</span>
