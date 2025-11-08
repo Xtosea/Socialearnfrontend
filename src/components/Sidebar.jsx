@@ -112,7 +112,7 @@ export default function Sidebar({ closeMenu }) {
           className="flex items-center justify-between w-full hover:text-blue-600"
         >
           <span className="flex items-center gap-2">
-            <Video className="w-4 h-4" /> Promote Videos
+            <Video className="w-4 h-4" /> Promote Social Media Videos
           </span>
           {openVideos ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
@@ -150,7 +150,7 @@ export default function Sidebar({ closeMenu }) {
           className="flex items-center justify-between w-full hover:text-blue-600"
         >
           <span className="flex items-center gap-2">
-            <Users className="w-4 h-4" /> Promote Engagements
+            <Users className="w-4 h-4" /> Promote Social Media Handles
           </span>
           {openEngagements ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
