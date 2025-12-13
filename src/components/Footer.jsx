@@ -84,7 +84,7 @@ export default function Footer() {
       {/* 🔻 Bottom Line */}
       <div className="border-t border-indigo-500 mt-10 pt-6 text-center text-gray-400 text-sm">
         © {new Date().getFullYear()} <span className="text-yellow-300">TrendWatch</span>.  
-        All rights reserved. | Made with ❤️ in Nigeria.
+        All rights reserved. | Made with ❤️ by Laugh World Entertainment.
       </div>
     </footer>
   );
