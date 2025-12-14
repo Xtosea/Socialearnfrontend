@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120, 150, 180];
 const WATCH_OPTIONS = [50, 100, 200, 300, 500, 1000];
-const BASE_RATE = 20; // points per 15s
+const BASE_RATE = 10; // points per 15s
 
 const isValidUrl = (string) => {
   try {
@@ -67,9 +67,9 @@ export default function WatchTaskForm({ platform }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!url || !isValidUrl(url)) return alert("Please paste a valid video URL");
+    if (!url || !isValidUrl(url)) return alert("Please paste a valid video URL eg. https://youtu.be/QTT3A9y57P4?si=RygEIbkc5DE5WK-K");
 
-    if (totalPointsFund > userPoints) return alert("❌ Not enough points to create this task");
+    if (totalPointsFund > userPoints) return alert("❌ Not enough points to create this video promotion");
 
     try {
       setLoading(true);
@@ -109,7 +109,7 @@ export default function WatchTaskForm({ platform }) {
         🎯 Your Points Balance: {userPoints}
       </div>
 
-      <h2 className="text-xl font-bold">{platform} Video Watch Promotion</h2>
+      <h2 className="text-xl font-bold">{platform} Video View Promotion</h2>
 
       {msg && (
         <p className={msg.startsWith("✅") ? "text-green-600" : "text-red-600"}>
@@ -120,7 +120,7 @@ export default function WatchTaskForm({ platform }) {
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
           type="url"
-          placeholder={`Paste ${platform} video URL`}
+          placeholder={`Paste ${platform} video URL eg. https://youtu.be/QTT3A9y57P4?si=RygEIbkc5DE5WK-K`}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className="w-full p-2 border rounded"
@@ -146,7 +146,7 @@ export default function WatchTaskForm({ platform }) {
         >
           {WATCH_OPTIONS.map((w) => (
             <option key={w} value={w}>
-              {w} Watches
+              {w} Views
             </option>
           ))}
         </select>
@@ -160,7 +160,7 @@ export default function WatchTaskForm({ platform }) {
           </p>
           {showWarning && (
             <p className="text-red-600 font-semibold">
-              ❌ You don’t have enough points to fund this task.
+              ❌ You don’t have enough points to fund this video promotion.
             </p>
           )}
         </div>
