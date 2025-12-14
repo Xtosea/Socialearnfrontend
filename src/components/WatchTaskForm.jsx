@@ -108,7 +108,7 @@ export default function WatchTaskForm({ platform }) {
         🎯 Your Points Balance: {userPoints}
       </div>
 
-      <h2 className="text-xl font-bold">{platform} Video Watch Task</h2>
+      <h2 className="text-xl font-bold">{platform} Video Watch Promotion</h2>
 
       {msg && (
         <p className={msg.startsWith("✅") ? "text-green-600" : "text-red-600"}>
@@ -200,7 +200,7 @@ export default function WatchTaskForm({ platform }) {
           ) : showWarning ? (
             "Insufficient Points"
           ) : (
-            "Submit Video Watch Task"
+            "Submit For View Promotion"
           )}
         </button>
       </form>
