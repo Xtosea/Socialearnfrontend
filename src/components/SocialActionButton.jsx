@@ -17,16 +17,16 @@ export default function SocialActionButton({ task, refreshUser }) {
       if (document.hasFocus()) {
         clearInterval(checkReturn);
         const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-        if (timeSpent >= 5) {
+        if (timeSpent >= 15) {
           autoReward(task._id);
         } else {
-          alert("Stay at least 5 seconds before returning for reward 💡");
+          alert("Perform the task before returning for reward 💡");
         }
       }
     }, 1000);
 
     // Optional visual countdown (just for UX)
-    setCountdown(5);
+    setCountdown(15);
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
