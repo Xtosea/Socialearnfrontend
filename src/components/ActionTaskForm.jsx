@@ -49,7 +49,7 @@ export default function ActionTaskForm({ initialAction = "like", onTaskCreated }
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!url.trim()) return alert("Please paste a valid social media URL!");
-    if (userPoints < totalPoints) return alert("❌ Not enough points to submit this task!");
+    if (userPoints < totalPoints) return alert("❌ Not enough points to promote this task!");
 
     try {
       const actionsArray = Array.from({ length: quantity }, () => ({
@@ -80,13 +80,13 @@ export default function ActionTaskForm({ initialAction = "like", onTaskCreated }
     }
   };
 
-  const availableActions = ["like", "share", "comment", "follow"];
+  const availableActions = ["like", "share", "comment", "follow","Subscribe"];
   if (platform === "youtube") availableActions.push("subscribe");
 
   return (
     <div className="max-w-xl mx-auto mt-8 p-6 bg-white rounded-2xl shadow-lg space-y-4 border border-gray-100">
       <h2 className="text-2xl font-bold text-center text-purple-700">
-        🎯 Promote with Action Tasks
+        🎯 Promote Social Media Engagements
       </h2>
 
       <div className="text-center font-semibold text-blue-700">
@@ -156,7 +156,7 @@ export default function ActionTaskForm({ initialAction = "like", onTaskCreated }
           type="submit"
           className="w-full p-3 font-semibold rounded-lg text-white bg-green-600 hover:bg-green-700 transition"
         >
-          Submit {selectedAction} Task
+          Submit {selectedAction} Social Media Engagement.
         </button>
       </form>
     </div>
