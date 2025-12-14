@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../api/api";
 
 const ACTION_POINTS = {
-  like: 5,
+  like: 10,
   share: 10,
   comment: 15,
   follow: 20,
@@ -65,7 +65,7 @@ export default function ActionTaskForm({ initialAction = "like", onTaskCreated }
         points: ACTION_POINTS[selectedAction],
       });
 
-      setMsg(`✅ ${res.data.message || "Task submitted successfully!"}`);
+      setMsg(`✅ ${res.data.message || "Task promotion submitted successfully!"}`);
       setUrl("");
 
       const updatedUser = await api.get("/users/me");
@@ -107,7 +107,7 @@ export default function ActionTaskForm({ initialAction = "like", onTaskCreated }
         <div>
           <input
             type="url"
-            placeholder="Paste social media post/profile URL"
+            placeholder="Paste social media post or Page URL"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 focus:outline-none"
