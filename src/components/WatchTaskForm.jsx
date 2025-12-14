@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import api, { submitVideo } from "../api/api";
 import { io } from "socket.io-client";
 
-const DURATION_OPTIONS = [15, 30, 45, 60];
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120, 150, 180];
 const WATCH_OPTIONS = [50, 100, 200, 300, 500, 1000];
-const BASE_RATE = 20; // points per 30s
+const BASE_RATE = 20; // points per 15s
 
 const isValidUrl = (string) => {
   try {
@@ -56,12 +56,13 @@ export default function WatchTaskForm({ platform }) {
 
   // Recalculate points and fund
   useEffect(() => {
-    const cost = BASE_RATE * Math.ceil(duration / 30);
-    const fund = cost * watches;
-    setPointsPerView(cost);
-    setTotalPointsFund(fund);
-    setShowWarning(fund > userPoints);
-  }, [duration, watches, userPoints]);
+  const cost = BASE_RATE * (duration / 15);
+  const fund = cost * watches;
+
+  setPointsPerView(cost);
+  setTotalPointsFund(fund);
+  setShowWarning(fund > userPoints);
+}, [duration, watches, userPoints]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
