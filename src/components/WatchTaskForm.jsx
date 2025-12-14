@@ -16,8 +16,8 @@ const isValidUrl = (string) => {
 };
 
 export default function WatchTaskForm({ platform }) {
-  const [duration, setDuration] = useState(30);
-  const [watches, setWatches] = useState(100);
+  const [duration, setDuration] = useState(15);
+  const [watches, setWatches] = useState(50);
   const [pointsPerView, setPointsPerView] = useState(0);
   const [totalPointsFund, setTotalPointsFund] = useState(0);
   const [url, setUrl] = useState("");
@@ -89,8 +89,8 @@ export default function WatchTaskForm({ platform }) {
 
       setMsg("✅ YouTube video view promotion submitted!");
       setUrl("");
-      setDuration(30);
-      setWatches(100);
+      setDuration(15);
+      setWatches(50);
       setShowWarning(false);
 
       setTimeout(() => setMsg(""), 4000);
