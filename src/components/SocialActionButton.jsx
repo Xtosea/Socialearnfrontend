@@ -20,7 +20,7 @@ export default function SocialActionButton({ task, refreshUser }) {
         if (timeSpent >= 15) {
           autoReward(task._id);
         } else {
-          alert("Perform the task before returning for reward 💡");
+          alert("Perform the task before returning for the reward 💡");
         }
       }
     }, 1000);
@@ -51,11 +51,11 @@ export default function SocialActionButton({ task, refreshUser }) {
   };
 
   const labels = {
-    youtube: "Open YouTube",
-    tiktok: "Open TikTok",
-    facebook: "Open Facebook",
-    instagram: "Open Instagram",
-    twitter: "Open Twitter",
+    youtube: "Do YouTube Task Earn Rewards",
+    tiktok: "Do TikTok Task Earn Earn Rewards",
+    facebook: "Do Facebook Task Earn Rewards",
+    instagram: "Do Instagram Task Earn Rewards",
+    twitter: "Do Twitter Task Earn Rewards",
   };
 
   return (
