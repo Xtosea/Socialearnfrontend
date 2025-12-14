@@ -13,7 +13,6 @@ import History from "./pages/History";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import AdminPanel from "./pages/AdminPanel";
 import ProfileEditor from "./components/ProfileEditor";
-// import ResetPassword from "./pages/ResetPassword";
 
 // 🎥 Watch tasks
 import WatchYouTube from "./pages/tasks/watch/WatchYouTube";
@@ -22,12 +21,6 @@ import WatchFacebook from "./pages/tasks/watch/WatchFacebook";
 import WatchInstagram from "./pages/tasks/watch/WatchInstagram";
 import WatchTwitter from "./pages/tasks/watch/WatchTwitter";
 
-// 🧠 Action tasks
-import FollowForm from "./pages/Actions/FollowForm";
-import LikeForm from "./pages/Actions/LikeForm";
-import CommentForm from "./pages/Actions/CommentForm";
-import ShareForm from "./pages/Actions/ShareForm";
-
 // 🧱 Components
 import Layout from "./components/Layout";
 import AdminRoute from "./components/AdminRoute";
@@ -35,17 +28,17 @@ import AdminRoute from "./components/AdminRoute";
 // 🌐 Context
 import { AuthContext } from "./context/AuthContext";
 
-// 🎯 Promoted
+// 🎯 Promoted & Actions
 import PromotedTasks from "./pages/PromotedTasks";
 import WatchTaskFormWrapper from "./pages/tasks/WatchTaskFormWrapper";
 import ActionPage from "./pages/promoted/ActionPage";
+import ActionTaskForm from "./components/ActionTaskForm";
 
-// 💸 Monetag Push Ads Integration
+// 💸 Monetag Push Ads
 import registerMonetagServiceWorker from "./components/ads/MonetagRegister";
 
-
 // ====================================================
-// 🔒 Protect routes (for logged-in users only)
+// 🔒 Protect routes
 // ====================================================
 function RequireAuth({ children }) {
   const { user } = useContext(AuthContext);
@@ -57,82 +50,66 @@ function RequireAuth({ children }) {
 // 🚀 App Router
 // ====================================================
 export default function App() {
-  // ✅ Register Monetag Push Ads
   useEffect(() => {
     registerMonetagServiceWorker();
   }, []);
 
   return (
-    <>
-      <Routes>
-        {/* ======================== */}
-        {/* 🌍 Public Routes */}
-        {/* ======================== */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
+    <Routes>
+      {/* 🌍 Public */}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* ======================== */}
-        {/* 🔐 Protected Routes */}
-        {/* ======================== */}
+      {/* 🔐 Protected */}
+      <Route
+        element={
+          <RequireAuth>
+            <Layout />
+          </RequireAuth>
+        }
+      >
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/edit-profile" element={<ProfileEditor />} />
+
+        {/* 🎥 Watch Tasks */}
+        <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />
+        <Route path="/tasks/watch/tiktok" element={<WatchTikTok />} />
+        <Route path="/tasks/watch/facebook" element={<WatchFacebook />} />
+        <Route path="/tasks/watch/instagram" element={<WatchInstagram />} />
+        <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />
+
+        {/* 📢 Promoted & Submissions */}
         <Route
+          path="/promoted/watch/:platform"
+          element={<PromotedTasks type="watch" />}
+        />
+        <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
+        <Route path="/submit/action" element={<ActionTaskForm />} />
+        <Route path="/action/:platform" element={<ActionPage />} />
+
+        {/* 🧑‍💼 Admin */}
+        <Route
+          path="/admin"
           element={
-            <RequireAuth>
-              <Layout />
-            </RequireAuth>
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
           }
-        >
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/wallet" element={<Wallet />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/edit-profile" element={<ProfileEditor />} />
+        />
+      </Route>
 
-          {/* 🎥 Watch Tasks */}
-          <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />
-          <Route path="/tasks/watch/tiktok" element={<WatchTikTok />} />
-          <Route path="/tasks/watch/facebook" element={<WatchFacebook />} />
-          <Route path="/tasks/watch/instagram" element={<WatchInstagram />} />
-          <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />
+      {/* 🌐 Public with layout */}
+      <Route element={<Layout />}>
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+      </Route>
 
-          {/* ❤️ Action Tasks */}
-          <Route path="/tasks/follow" element={<FollowForm />} />
-          <Route path="/tasks/like" element={<LikeForm />} />
-          <Route path="/tasks/comment" element={<CommentForm />} />
-          <Route path="/tasks/share" element={<ShareForm />} />
-
-          {/* 📢 Promoted & Submissions */}
-          <Route
-            path="/promoted/watch/:platform"
-            element={<PromotedTasks type="watch" />}
-          />
-          <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
-          <Route path="/action/:platform" element={<ActionPage />} />
-
-          {/* 🧑‍💼 Admin Panel */}
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <AdminPanel />
-              </AdminRoute>
-            }
-          />
-        </Route>
-
-        {/* ======================== */}
-        {/* 🌐 Public Routes with Layout */}
-        {/* ======================== */}
-        <Route element={<Layout />}>
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-        </Route>
-
-        {/* 🚫 Catch-all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-
-    </>
+      {/* 🚫 Catch all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
