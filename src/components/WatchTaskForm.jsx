@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 
 const DURATION_OPTIONS = [15, 30, 45, 60];
 const WATCH_OPTIONS = [50, 100, 200, 300, 500, 1000];
-const BASE_RATE = 2; // points per 30s
+const BASE_RATE = 20; // points per 30s
 
 const isValidUrl = (string) => {
   try {
@@ -86,7 +86,7 @@ export default function WatchTaskForm({ platform }) {
       const updatedPoints = res.data.points ?? userPoints;
       setUserPoints(updatedPoints);
 
-      setMsg("✅ Video watch task submitted!");
+      setMsg("✅ YouTube video view promotion submitted!");
       setUrl("");
       setDuration(30);
       setWatches(100);
@@ -200,7 +200,7 @@ export default function WatchTaskForm({ platform }) {
           ) : showWarning ? (
             "Insufficient Points"
           ) : (
-            "Submit For View Promotion"
+            "Submit For Video View Promotion"
           )}
         </button>
       </form>
