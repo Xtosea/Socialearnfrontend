@@ -1,9 +1,28 @@
+// src/pages/History.jsx
 import React, { useEffect, useState, useRef } from "react";
-import { io } from "socket.io-client";
 import { CSVLink } from "react-csv";
 import { toast, Toaster } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
-import api from "../api/api"; // Make sure api.js uses VITE_API_URL
+import api from "../api/api";
+import { io } from "socket.io-client";
+
+// Helper to create socket connection for dev & production
+const createSocket = () => {
+  let SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+
+  if (!SOCKET_URL) {
+    if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+      SOCKET_URL = "http://localhost:5000";
+    } else {
+      SOCKET_URL = "https://socialearnbackend.onrender.com";
+    }
+  }
+
+  return io(SOCKET_URL, {
+    auth: { token: localStorage.getItem("token") },
+    transports: ["websocket"], // force websocket to avoid polling issues
+  });
+};
 
 export default function History() {
   const [history, setHistory] = useState([]);
@@ -13,7 +32,7 @@ export default function History() {
   const [newEntryId, setNewEntryId] = useState(null);
   const socketRef = useRef(null);
 
-  // Helper: Calculate daily points
+  // Calculate daily points
   const calculateDailySummary = (hist) => {
     const summary = {};
     hist.forEach((h) => {
@@ -27,11 +46,7 @@ export default function History() {
   // Fetch wallet/history
   const fetchHistory = async () => {
     try {
-      const res = await api.get("/wallet", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await api.get("/wallet");
       const hist = res.data.history || [];
       setCurrentPoints(res.data.balance || 0);
       setHistory(hist);
@@ -45,12 +60,7 @@ export default function History() {
   useEffect(() => {
     fetchHistory();
 
-    // Connect to backend socket (use env variable)
-    socketRef.current = io(import.meta.env.VITE_API_URL, {
-      auth: {
-        token: localStorage.getItem("token"),
-      },
-    });
+    socketRef.current = createSocket();
 
     socketRef.current.on("walletUpdated", (data) => {
       if (data.userId === localStorage.getItem("userId")) {
@@ -58,7 +68,7 @@ export default function History() {
         setHistory(data.history);
         calculateDailySummary(data.history);
 
-        // Animate last entry
+        // Animate new entry
         if (data.history.length > 0) {
           setNewEntryId(data.history[data.history.length - 1]._id);
           setTimeout(() => setNewEntryId(null), 3000);
@@ -100,7 +110,7 @@ export default function History() {
   const filteredKeys =
     filter === "all" ? Object.keys(grouped) : [filter].filter((f) => grouped[f]);
 
-  // CSV Export data
+  // CSV export
   const csvData = history.map((h) => ({
     Type: typeLabels[h.type] || h.type,
     Amount: h.amount,
@@ -108,7 +118,7 @@ export default function History() {
     Date: new Date(h.date || h.createdAt).toLocaleString(),
   }));
 
-  // PDF Export
+  // PDF export
   const exportPDF = async () => {
     if (!history.length) return toast.error("No history to export");
     const { jsPDF } = await import("jspdf");
