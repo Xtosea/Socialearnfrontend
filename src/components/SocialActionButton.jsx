@@ -8,11 +8,16 @@ export default function SocialActionButton({ task, refreshUser }) {
   const platform = detectPlatformFromUrl(task.url);
 
   const handleAction = () => {
+    // ✅ CONFIRMATION (trust + clarity)
+    const ok = window.confirm(
+      `Complete this task to earn ${task.rewardPoints} points. Continue?`
+    );
+    if (!ok) return;
+
     localStorage.setItem("pendingTaskId", task._id);
     window.open(task.url, "_blank");
     const startTime = Date.now();
 
-    // Track when the user comes back to the app
     const checkReturn = setInterval(() => {
       if (document.hasFocus()) {
         clearInterval(checkReturn);
@@ -20,12 +25,12 @@ export default function SocialActionButton({ task, refreshUser }) {
         if (timeSpent >= 15) {
           autoReward(task._id);
         } else {
-          alert("Perform the task before returning for the reward 💡");
+          alert("Please complete the task before returning 💡");
         }
       }
     }, 1000);
 
-    // Optional visual countdown (just for UX)
+    // UX countdown
     setCountdown(15);
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -45,25 +50,18 @@ export default function SocialActionButton({ task, refreshUser }) {
       refreshUser && refreshUser();
       localStorage.removeItem("pendingTaskId");
     } catch (err) {
-      console.error("Reward error:", err);
       alert(err.response?.data?.message || "Reward failed");
     }
-  };
-
-  const labels = {
-    youtube: "Do YouTube Task Earn Rewards",
-    tiktok: "Do TikTok Task Earn Earn Rewards",
-    facebook: "Do Facebook Task Earn Rewards",
-    instagram: "Do Instagram Task Earn Rewards",
-    twitter: "Do Twitter Task Earn Rewards",
   };
 
   return (
     <button
       onClick={handleAction}
-      className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl shadow-md transition-all"
+      className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl shadow-md"
     >
-      {countdown ? `Returning in ${countdown}s...` : labels[platform] || "Open"}
+      {countdown
+        ? `Returning in ${countdown}s...`
+        : `Complete Task • +${task.rewardPoints} pts`}
     </button>
   );
 }
