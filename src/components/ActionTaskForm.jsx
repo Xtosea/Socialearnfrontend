@@ -33,7 +33,7 @@ export default function ActionTaskForm({ initialAction = "like", onTaskCreated }
   }, []);
 
   useEffect(() => {
-    setTotalPoints((ACTION_POINTS[selectedAction] || 5) * quantity);
+    setTotalPoints((ACTION_POINTS[selectedAction] || 10) * quantity);
   }, [selectedAction, quantity]);
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function ActionTaskForm({ initialAction = "like", onTaskCreated }
         points: ACTION_POINTS[selectedAction],
       }));
 
-      const res = await api.post("/tasks/action", {
+      const res = await api.post("/tasks/social", {
         url,
         platform,
         type: "social",
