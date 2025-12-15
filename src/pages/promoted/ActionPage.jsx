@@ -138,9 +138,9 @@ export default function ActionPage() {
                     {t.title || "Untitled Task"}
                   </h3>
                 </div>
-                <span className="bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full font-medium">
-                  +{t.rewardPoints || 10} pts
-                </span>
+              <span className="bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full font-medium">
+  💰 Earn {t.rewardPoints} points
+</span>
               </div>
 
               <p className="text-gray-700 text-sm mb-2">
