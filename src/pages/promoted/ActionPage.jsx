@@ -68,7 +68,13 @@ export default function ActionPage() {
               </div>
 
               <p className="text-gray-700 text-sm mb-2">{info.actionText}</p>
-              <p className="text-gray-500 text-xs mb-3">Posted by: <strong>{t.createdBy?.username || "Unknown"}</strong></p>
+             <p className="text-gray-500 text-xs">
+  Posted by: <strong>{t.createdBy?.username || "Unknown"}</strong>
+</p>
+
+<p className="text-xs text-gray-500 mb-3">
+  👥 {t.completedBy?.length || 0} people completed this task
+</p>
 
               <SocialActionButton
                 task={t}
