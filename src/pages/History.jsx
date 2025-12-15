@@ -27,7 +27,11 @@ export default function History() {
   // Fetch wallet/history
   const fetchHistory = async () => {
     try {
-      const res = await api.get("/wallet");
+      const res = await api.get("/wallet", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       const hist = res.data.history || [];
       setCurrentPoints(res.data.balance || 0);
       setHistory(hist);
@@ -41,8 +45,12 @@ export default function History() {
   useEffect(() => {
     fetchHistory();
 
-    // Connect to backend socket (use environment variable for production)
-    socketRef.current = io(import.meta.env.VITE_API_URL);
+    // Connect to backend socket (use env variable)
+    socketRef.current = io(import.meta.env.VITE_API_URL, {
+      auth: {
+        token: localStorage.getItem("token"),
+      },
+    });
 
     socketRef.current.on("walletUpdated", (data) => {
       if (data.userId === localStorage.getItem("userId")) {
@@ -53,7 +61,7 @@ export default function History() {
         // Animate last entry
         if (data.history.length > 0) {
           setNewEntryId(data.history[data.history.length - 1]._id);
-          setTimeout(() => setNewEntryId(null), 3000); // remove highlight after 3s
+          setTimeout(() => setNewEntryId(null), 3000);
         }
 
         toast.success("Wallet updated!");
