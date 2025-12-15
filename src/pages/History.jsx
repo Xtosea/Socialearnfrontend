@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from "react";
-import api from "../api/api";
+import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { CSVLink } from "react-csv";
 import { toast, Toaster } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
+import api from "../api/api"; // Make sure api.js uses VITE_API_URL
 
 export default function History() {
   const [history, setHistory] = useState([]);
   const [filter, setFilter] = useState("all");
   const [currentPoints, setCurrentPoints] = useState(0);
   const [dailySummary, setDailySummary] = useState({});
+  const [newEntryId, setNewEntryId] = useState(null);
+  const socketRef = useRef(null);
 
   // Helper: Calculate daily points
   const calculateDailySummary = (hist) => {
@@ -39,21 +41,29 @@ export default function History() {
   useEffect(() => {
     fetchHistory();
 
-    const socket = io("http://localhost:5000");
+    // Connect to backend socket (use environment variable for production)
+    socketRef.current = io(import.meta.env.VITE_API_URL);
 
-    socket.on("walletUpdated", (data) => {
+    socketRef.current.on("walletUpdated", (data) => {
       if (data.userId === localStorage.getItem("userId")) {
         setCurrentPoints(data.balance);
         setHistory(data.history);
         calculateDailySummary(data.history);
+
+        // Animate last entry
+        if (data.history.length > 0) {
+          setNewEntryId(data.history[data.history.length - 1]._id);
+          setTimeout(() => setNewEntryId(null), 3000); // remove highlight after 3s
+        }
+
         toast.success("Wallet updated!");
       }
     });
 
-    return () => socket.disconnect();
+    return () => socketRef.current.disconnect();
   }, []);
 
-  // Group by type
+  // Group history by type
   const grouped = history.reduce((acc, item) => {
     if (!acc[item.type]) acc[item.type] = [];
     acc[item.type].push(item);
@@ -82,7 +92,7 @@ export default function History() {
   const filteredKeys =
     filter === "all" ? Object.keys(grouped) : [filter].filter((f) => grouped[f]);
 
-  // CSV Export
+  // CSV Export data
   const csvData = history.map((h) => ({
     Type: typeLabels[h.type] || h.type,
     Amount: h.amount,
@@ -94,7 +104,7 @@ export default function History() {
   const exportPDF = async () => {
     if (!history.length) return toast.error("No history to export");
     const { jsPDF } = await import("jspdf");
-    await import("jspdf-autotable"); // plugin for tables
+    await import("jspdf-autotable");
 
     const doc = new jsPDF();
     doc.text("Wallet History", 14, 15);
@@ -116,7 +126,6 @@ export default function History() {
     doc.save("wallet-history.pdf");
   };
 
-  // Helper: Get today and yesterday points
   const todayKey = new Date().toLocaleDateString();
   const yesterdayKey = new Date(Date.now() - 86400000).toLocaleDateString();
 
@@ -229,7 +238,8 @@ export default function History() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
                         transition={{ duration: 0.3 }}
-                        className="border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+                        className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition
+                          ${h._id === newEntryId ? "bg-yellow-100 animate-pulse" : ""}`}
                       >
                         <div className="flex justify-between items-center mb-2">
                           <span className="font-semibold text-blue-700">{h.type}</span>
