@@ -12,13 +12,15 @@ export default function Wallet() {
   const [loadingTransfer, setLoadingTransfer] = useState(false);
 
   const typeLabels = {
-    earn: "Earned",
-    redeem: "Redeemed",
-    transfer_in: "Received",
-    transfer_out: "Sent",
-    admin_add: "Admin added",
-    admin_deduct: "Admin deducted",
-  };
+  earn: "Earned",
+  action: "Social Action",
+  "video-view": "Video View",
+  redeem: "Redeemed",
+  transfer_in: "Received",
+  transfer_out: "Sent",
+  admin_add: "Admin added",
+  admin_deduct: "Admin deducted",
+};
 
   // Fetch wallet data
   const fetchWallet = async () => {
