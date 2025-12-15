@@ -127,36 +127,41 @@ export default function ActionPage() {
       ) : tasks.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tasks.map((t) => (
-            <div
-              key={t._id}
-              className={`${info.bg} border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  {info.icon}
-                  <h3 className="font-semibold text-lg">
-                    {t.title || "Untitled Task"}
-                  </h3>
-                </div>
-              <span className="bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full font-medium">
-  💰 Earn {t.rewardPoints} points
-</span>
-              </div>
+  <div
+    key={t._id}
+    className={`${info.bg} border border-gray-200 rounded-2xl p-5 shadow-sm`}
+  >
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        {info.icon}
+        <h3 className="font-semibold text-lg">
+          {t.title || "Untitled Task"}
+        </h3>
+      </div>
 
-              <p className="text-gray-700 text-sm mb-2">
-                {info.actionText}
-              </p>
-              <p className="text-gray-500 text-xs mb-3">
-                Posted by: <strong>{t.createdBy?.username || "Unknown"}</strong>
-              </p>
+      <span className="bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full font-medium">
+        💰 Earn {t.rewardPoints} points
+      </span>
+    </div>
 
-              <SocialActionButton
-                task={t}
-                action="visit"
-                onComplete={() => handleReward(t._id, "visit", t.url)}
-              />
-            </div>
-          ))}
+    <p className="text-gray-700 text-sm mb-2">
+      {info.actionText}
+    </p>
+
+    <p className="text-gray-500 text-xs mb-3">
+      Posted by: <strong>{t.createdBy?.username || "Unknown"}</strong>
+    </p>
+
+    <SocialActionButton
+      task={t}
+      refreshUser={() => {
+        api.get("/users/me").then(res =>
+          setPoints(res.data.points || 0)
+        );
+      }}
+    />
+  </div>
+))}
         </div>
       ) : (
         <div className="text-center text-gray-600 mt-16">
