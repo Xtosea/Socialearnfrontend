@@ -39,14 +39,14 @@ export default function History() {
   }, {});
 
   const typeLabels = {
-    "video-view": "🎥 Video Views",
-    action: "👍 Social Actions",
-    redeem: "💰 Redeems",
-    transfer_in: "🔄 Received Transfers",
-    transfer_out: "↗️ Sent Transfers",
-    admin_add: "🛠️ Admin Added",
-    admin_deduct: "🛠️ Admin Deducted",
-  };
+  "video-view": "🎥 Video Views",
+  action: "👍 Social Actions",
+  redeem: "💰 Redeems",
+  transfer_in: "🔄 Received Transfers",
+  transfer_out: "↗️ Sent Transfers",
+  admin_add: "🛠️ Admin Added",
+  admin_deduct: "🛠️ Admin Deducted",
+};
 
   const grandTotals = history.reduce(
     (acc, h) => {
