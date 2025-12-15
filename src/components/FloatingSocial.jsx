@@ -12,7 +12,7 @@ export default function FloatingSocial() {
     { icon: <Twitter />, url: "https://twitter.com", label: "Twitter" },
     { icon: <Linkedin />, url: "https://linkedin.com", label: "LinkedIn" },
     { icon: <Globe />, url: "https://tiktok.com", label: "TikTok" }, // Use Globe as placeholder
-    { icon: <MessageCircle />, url: "https://t.me/TrendWatch", label: "Telegram" },
+    { icon: <MessageCircle />, url: "https://t.me/Trendwatch2", label: "Telegram" },
     { icon: <Smartphone />, url: "https://chat.whatsapp.com/HmrrTA2qasnHXYKFSe4yK3", label: "WhatsApp" },
     { icon: <Mail />, url: "mailto:support@trendwatch.i.ng", label: "Email" },
   ];
