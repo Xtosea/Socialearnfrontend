@@ -13,7 +13,7 @@ export default function FloatingSocial() {
     { icon: <Linkedin />, url: "https://linkedin.com", label: "LinkedIn" },
     { icon: <Globe />, url: "https://tiktok.com", label: "TikTok" }, // Use Globe as placeholder
     { icon: <MessageCircle />, url: "https://t.me/TrendWatch", label: "Telegram" },
-    { icon: <Smartphone />, url: "https://wa.me/2341234567890", label: "WhatsApp" },
+    { icon: <Smartphone />, url: "Follow this link to join my WhatsApp group: https://chat.whatsapp.com/HmrrTA2qasnHXYKFSe4yK3", label: "WhatsApp" },
     { icon: <Mail />, url: "mailto:support@trendwatch.i.ng", label: "Email" },
   ];
 
