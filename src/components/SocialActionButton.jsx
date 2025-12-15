@@ -4,6 +4,7 @@ import { detectPlatformFromUrl } from "../utils/detectPlatform";
 
 export default function SocialActionButton({ task, refreshUser }) {
   const [countdown, setCountdown] = useState(null);
+  const [started, setStarted] = useState(false); // Track if task has started
   const platform = detectPlatformFromUrl(task.url);
 
   const handleAction = async () => {
@@ -13,11 +14,13 @@ export default function SocialActionButton({ task, refreshUser }) {
     if (!ok) return;
 
     try {
-      // ✅ Mark task as started (backend tracking)
-      await api.post(`/tasks/social/${task._id}/start`);
+      // ✅ Only start if not already started
+      if (!started) {
+        await api.post(`/tasks/social/${task._id}/start`);
+        setStarted(true);
+      }
 
       localStorage.setItem("pendingTaskId", task._id);
-
       const startTime = Date.now();
       window.open(task.url, "_blank");
 
@@ -50,7 +53,7 @@ export default function SocialActionButton({ task, refreshUser }) {
       }, 1000);
     } catch (err) {
       console.error("Start task error:", err);
-      alert("Failed to start task");
+      alert(err.response?.data?.message || "Failed to start task");
     }
   };
 
@@ -60,6 +63,7 @@ export default function SocialActionButton({ task, refreshUser }) {
       alert(res.data.message);
       refreshUser?.();
       localStorage.removeItem("pendingTaskId");
+      setStarted(false); // reset
     } catch (err) {
       console.error("Reward error:", err);
       alert(err.response?.data?.message || "Reward failed");
@@ -69,7 +73,10 @@ export default function SocialActionButton({ task, refreshUser }) {
   return (
     <button
       onClick={handleAction}
-      className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl shadow-md transition-all"
+      disabled={countdown !== null}
+      className={`bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl shadow-md transition-all ${
+        countdown ? "opacity-70 cursor-not-allowed" : ""
+      }`}
     >
       {countdown
         ? `Returning in ${countdown}s...`
