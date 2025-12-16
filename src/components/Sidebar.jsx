@@ -179,6 +179,15 @@ export default function Sidebar({ closeMenu }) {
           </div>
         )}
 
+       <Link
+  to="/contact"
+  onClick={closeMenu}
+  className={`flex items-center gap-2 p-2 ${isActive("/contact")}`}
+>
+  <MessageCircle className="w-4 h-4 text-purple-500" /> Support
+</Link>
+         
+
         <Link
           to="/admin"
           onClick={closeMenu}
