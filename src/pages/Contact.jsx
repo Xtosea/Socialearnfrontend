@@ -1,9 +1,7 @@
-
-
 // ================================
 // CONTACT PAGE
 // ================================
-export function ContactTrendWatch() {
+export default function Contact() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-3xl mx-auto">
@@ -50,8 +48,4 @@ export function ContactTrendWatch() {
       </div>
     </div>
   );
-}
-
-export default function TrendWatchPages() {
-  return null; // helper export if needed
 }
