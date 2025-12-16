@@ -48,7 +48,7 @@ export default function Footer() { return ( <footer className="bg-gradient-to-br
     <a href="https://www.facebook.com/share/g/16UUqHyoNs/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#1877F2] hover:scale-110 transition">
       <Facebook className="w-5 h-5" />
     </a>
-    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#E1306C] hover:scale-110 transition">
+    <a href="https://instagram.com/trendwatchpromotion" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#E1306C] hover:scale-110 transition">
       <Instagram className="w-5 h-5" />
     </a>
     <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#FF0000] hover:scale-110 transition">
