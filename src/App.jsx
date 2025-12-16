@@ -63,7 +63,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* 🔐 Protected */}
+      {/* 🔐 Protected with Layout */}
       <Route
         element={
           <RequireAuth>
@@ -93,8 +93,9 @@ export default function App() {
         <Route path="/submit/action" element={<ActionTaskForm />} />
         <Route path="/action/:platform" element={<ActionPage />} />
 
-<Route path="/about" element={<AboutTrendWatch />} />
-<Route path="/contact" element={<ContactTrendWatch />} />
+        {/* ℹ️ Info Pages */}
+        <Route path="/about" element={<AboutTrendWatch />} />
+        <Route path="/contact" element={<ContactTrendWatch />} />
 
         {/* 🧑‍💼 Admin */}
         <Route
@@ -107,7 +108,7 @@ export default function App() {
         />
       </Route>
 
-      {/* 🌐 Public with layout */}
+      {/* 🌐 Public with Layout */}
       <Route element={<Layout />}>
         <Route path="/leaderboard" element={<LeaderboardPage />} />
       </Route>
@@ -116,4 +117,4 @@ export default function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-)
+}
