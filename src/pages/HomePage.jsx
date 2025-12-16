@@ -5,7 +5,7 @@ import FeaturesSection from "../components/FeaturesSection";
 import HowItWorks from "../components/HowItWorks";
 import CTASection from "../components/CTASection";
 import Footer from "../components/Footer";
-import FloatingSocial from "../components/FloatingSocial";
+//import FloatingSocial from "../components/FloatingSocial";
 import BackToTop from "../components/BackToTop";
 
 export default function HomePage() {
@@ -16,7 +16,7 @@ export default function HomePage() {
       <div id="howitworks"><HowItWorks /></div>
       <div id="cta"><CTASection /></div>
       <Footer />
-      <FloatingSocial />
+     
       <BackToTop />
     </div>
   );
