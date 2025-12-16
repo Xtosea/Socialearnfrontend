@@ -63,7 +63,7 @@ export default function Footer() { return ( <footer className="bg-gradient-to-br
     <a href="https://t.me/Trendwatch2" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#229ED9] hover:scale-110 transition">
       <FaTelegramPlane className="w-5 h-5" />
     </a>
-    <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-black hover:scale-110 transition">
+    <a href="https://www.tiktok.com/@trendwatchpromoti?_r=1&_t=ZS-92GgudekAyd" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-black hover:scale-110 transition">
       <FaTiktok className="w-5 h-5" />
     </a>
     <a href="https://chat.whatsapp.com/HmrrTA2qasnHXYKFSe4yK3" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#25D366] hover:scale-110 transition">
