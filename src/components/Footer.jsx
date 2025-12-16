@@ -24,12 +24,12 @@ export default function Footer() { return ( <footer className="bg-gradient-to-br
           </a>
         </li>
         <li>
-          <a href="/tasks" className="hover:text-yellow-300 transition">
+          <a href="/register" className="hover:text-yellow-300 transition">
             Tasks & Rewards
           </a>
         </li>
         <li>
-          <a href="/leaderboard" className="hover:text-yellow-300 transition">
+          <a href="/register" className="hover:text-yellow-300 transition">
             Leaderboard
           </a>
         </li>
