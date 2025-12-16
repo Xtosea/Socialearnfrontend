@@ -66,6 +66,13 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
+      {/* 🌐 Public pages with layout (accessible to everyone) */}
+      <Route element={<Layout />}>
+        <Route path="/about" element={<About />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/contact" element={<Contact />} /> {/* Public for all */}
+      </Route>
+
       {/* 🔐 Protected pages with layout */}
       <Route
         element={
@@ -105,15 +112,6 @@ export default function App() {
             </AdminRoute>
           }
         />
-
-        {/* Support/contact link inside layout for logged-in users */}
-        <Route path="/contact" element={<Contact />} />
-      </Route>
-
-      {/* 🌐 Public pages with layout (like About, Leaderboard) */}
-      <Route element={<Layout />}>
-        <Route path="/about" element={<About />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
       </Route>
 
       {/* 🚫 Catch all */}
