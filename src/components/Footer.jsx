@@ -45,7 +45,7 @@ export default function Footer() { return ( <footer className="bg-gradient-to-br
     <div>
       <h3 className="text-lg font-semibold text-white mb-3">Follow Us</h3>
       <div className="flex flex-wrap gap-4">
-    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#1877F2] hover:scale-110 transition">
+    <a href="https://www.facebook.com/share/g/16UUqHyoNs/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#1877F2] hover:scale-110 transition">
       <Facebook className="w-5 h-5" />
     </a>
     <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#E1306C] hover:scale-110 transition">
@@ -54,7 +54,7 @@ export default function Footer() { return ( <footer className="bg-gradient-to-br
     <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#FF0000] hover:scale-110 transition">
       <Youtube className="w-5 h-5" />
     </a>
-    <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-black hover:scale-110 transition">
+    <a href="https://x.com/trendwatch25117" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-black hover:scale-110 transition">
       <Twitter className="w-5 h-5" />
     </a>
     <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white text-[#0A66C2] hover:scale-110 transition">
