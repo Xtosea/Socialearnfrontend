@@ -12,7 +12,6 @@ import Wallet from "./pages/Wallet";
 import History from "./pages/History";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import AdminPanel from "./pages/AdminPanel";
-import ProfileEditor from "./components/ProfileEditor";
 
 // 🎥 Watch tasks
 import WatchYouTube from "./pages/tasks/watch/WatchYouTube";
@@ -24,6 +23,7 @@ import WatchTwitter from "./pages/tasks/watch/WatchTwitter";
 // 🧱 Components
 import Layout from "./components/Layout";
 import AdminRoute from "./components/AdminRoute";
+import ProfileEditor from "./components/ProfileEditor";
 
 // 🌐 Context
 import { AuthContext } from "./context/AuthContext";
@@ -34,10 +34,12 @@ import WatchTaskFormWrapper from "./pages/tasks/WatchTaskFormWrapper";
 import ActionPage from "./pages/promoted/ActionPage";
 import ActionTaskForm from "./components/ActionTaskForm";
 
+// 📄 Pages
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+
 // 💸 Monetag Push Ads
 import registerMonetagServiceWorker from "./components/ads/MonetagRegister";
-import About from "./pages/About";
-import { Contact } from "./pages/Contact";
 
 // ====================================================
 // 🔒 Protect routes
@@ -58,13 +60,15 @@ export default function App() {
 
   return (
     <Routes>
-      {/ 🌍 Public /}
+      {/* 🌍 Public */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
 
-      {/ 🔐 Protected /}
+      {/* 🔐 Protected */}
       <Route
         element={
           <RequireAuth>
@@ -78,14 +82,14 @@ export default function App() {
         <Route path="/history" element={<History />} />
         <Route path="/edit-profile" element={<ProfileEditor />} />
 
-        {/ 🎥 Watch Tasks /}
+        {/* 🎥 Watch Tasks */}
         <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />
         <Route path="/tasks/watch/tiktok" element={<WatchTikTok />} />
         <Route path="/tasks/watch/facebook" element={<WatchFacebook />} />
         <Route path="/tasks/watch/instagram" element={<WatchInstagram />} />
         <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />
 
-        {/ 📢 Promoted & Submissions /}
+        {/* 📢 Promoted & Submissions */}
         <Route
           path="/promoted/watch/:platform"
           element={<PromotedTasks type="watch" />}
@@ -94,10 +98,7 @@ export default function App() {
         <Route path="/submit/action" element={<ActionTaskForm />} />
         <Route path="/action/:platform" element={<ActionPage />} />
 
-<Route path="/about" element={<AboutTrendWatch />} />
-<Route path="/contact" element={<ContactTrendWatch />} />
-
-        {/ 🧑‍💼 Admin /}
+        {/* 🧑‍💼 Admin */}
         <Route
           path="/admin"
           element={
@@ -108,14 +109,13 @@ export default function App() {
         />
       </Route>
 
-      {/ 🌐 Public with layout /}
+      {/* 🌐 Public with layout */}
       <Route element={<Layout />}>
         <Route path="/leaderboard" element={<LeaderboardPage />} />
       </Route>
 
-      {/ 🚫 Catch all /}
+      {/* 🚫 Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
-
