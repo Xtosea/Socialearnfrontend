@@ -41,45 +41,7 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* 📱 Social Media */}
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-3">Follow Us</h3>
-          <div className="flex space-x-4">
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-yellow-300 transition"
-            >
-              <Facebook className="w-6 h-6" />
-            </a>
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-yellow-300 transition"
-            >
-              <Instagram className="w-6 h-6" />
-            </a>
-            <a
-              href="https://youtube.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-yellow-300 transition"
-            >
-              <Youtube className="w-6 h-6" />
-            </a>
-            <a
-              href="https://twitter.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-yellow-300 transition"
-            >
-              <Twitter className="w-6 h-6" />
-            </a>
-          </div>
-        </div>
-      </div>
+        
 
       {/* 🔻 Bottom Line */}
       <div className="border-t border-indigo-500 mt-10 pt-6 text-center text-gray-400 text-sm">
