@@ -9,7 +9,7 @@ export default function FloatingSocial() {
     { icon: <Facebook />, url: "https://facebook.com", label: "Facebook" },
     { icon: <Instagram />, url: "https://instagram.com", label: "Instagram" },
     { icon: <Youtube />, url: "https://youtube.com", label: "YouTube" },
-    { icon: <Twitter />, url: "https://twitter.com", label: "Twitter" },
+    { icon: <Twitter />, url: "https://x.com/trendwatch25117", label: "Twitter" },
     { icon: <Linkedin />, url: "https://linkedin.com", label: "LinkedIn" },
     { icon: <Globe />, url: "https://tiktok.com", label: "TikTok" }, // Use Globe as placeholder
     { icon: <MessageCircle />, url: "https://t.me/Trendwatch2", label: "Telegram" },
