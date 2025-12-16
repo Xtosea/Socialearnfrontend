@@ -37,7 +37,7 @@ import ActionTaskForm from "./components/ActionTaskForm";
 // 💸 Monetag Push Ads
 import registerMonetagServiceWorker from "./components/ads/MonetagRegister";
 import About from "./pages/About";
-import { Contact} from "./pages/Contact";
+import Contact from "./pages/Contact";
 // ====================================================
 // 🔒 Protect routes
 // ====================================================
