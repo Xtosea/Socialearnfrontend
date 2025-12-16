@@ -1,18 +1,31 @@
-// src/components/GoBackButton.jsx
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+// src/components/BackToTop.jsx
+import React, { useState, useEffect } from "react";
+import { ArrowUp } from "lucide-react";
 
-export default function GoBackButton() {
-  const navigate = useNavigate();
+export default function BackToTop() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setVisible(window.scrollY > 300); // show after 300px scroll
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <button
-      onClick={() => navigate(-1)}
-      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors mb-4"
+      onClick={scrollToTop}
+      className={`fixed bottom-6 right-6 z-50 p-3 rounded-full bg-purple-600 text-white shadow-lg transition transform hover:scale-110 ${
+        visible ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+      title="Back to Top"
     >
-      <ArrowLeft className="w-5 h-5" />
-      Go Back
+      <ArrowUp className="w-5 h-5" />
     </button>
   );
 }
