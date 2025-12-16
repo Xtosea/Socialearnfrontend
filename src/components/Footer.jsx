@@ -1,4 +1,16 @@
-import React from "react"; import { Facebook, Instagram, Youtube, Twitter, Linkedin } from "lucide-react"; import { FaTelegramPlane, FaTiktok, FaWhatsapp } from "react-icons/fa"; import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
+import React from "react";
+import {
+  Facebook,
+  Instagram,
+  Youtube,
+  Twitter,
+  Linkedin,
+} from "lucide-react";
+import {
+  FaTelegramPlane,
+  FaTiktok,
+  FaWhatsapp,
+} from "react-icons/fa";
 
 export default function Footer() { return ( <footer className="bg-gradient-to-br from-indigo-700 via-purple-700 to-indigo-900 text-gray-200 py-10 mt-12"> <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-10"> {/* 🌐 Brand Info */} <div> <h2 className="text-2xl font-bold text-white mb-3">TrendWatch</h2> <p className="text-gray-300 leading-relaxed"> Earn points, promote your videos, and grow your audience — all in one place. Join the fastest-growing social video engagement platform today. </p> </div>
 
