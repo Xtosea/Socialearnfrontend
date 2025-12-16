@@ -36,6 +36,7 @@ import ActionTaskForm from "./components/ActionTaskForm";
 
 // 💸 Monetag Push Ads
 import registerMonetagServiceWorker from "./components/ads/MonetagRegister";
+import { AboutTrendWatch, ContactTrendWatch } from "./pages/TrendWatchPages";
 
 // ====================================================
 // 🔒 Protect routes
@@ -91,6 +92,9 @@ export default function App() {
         <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
         <Route path="/submit/action" element={<ActionTaskForm />} />
         <Route path="/action/:platform" element={<ActionPage />} />
+
+<Route path="/about" element={<AboutTrendWatch />} />
+<Route path="/contact" element={<ContactTrendWatch />} />
 
         {/* 🧑‍💼 Admin */}
         <Route
