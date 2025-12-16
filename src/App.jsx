@@ -66,11 +66,10 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* 🌐 Public pages with layout (accessible to everyone) */}
+      {/* 🌐 Pages with layout */}
       <Route element={<Layout />}>
         <Route path="/about" element={<About />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/contact" element={<Contact />} /> {/* Public for all */}
       </Route>
 
       {/* 🔐 Protected pages with layout */}
@@ -81,11 +80,15 @@ export default function App() {
           </RequireAuth>
         }
       >
+        {/* Pages for logged-in users only */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/history" element={<History />} />
         <Route path="/edit-profile" element={<ProfileEditor />} />
+
+        {/* Contact now protected */}
+        <Route path="/contact" element={<Contact />} />
 
         {/* 🎥 Watch tasks */}
         <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />
@@ -95,10 +98,7 @@ export default function App() {
         <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />
 
         {/* 📢 Promoted & Submissions */}
-        <Route
-          path="/promoted/watch/:platform"
-          element={<PromotedTasks type="watch" />}
-        />
+        <Route path="/promoted/watch/:platform" element={<PromotedTasks type="watch" />} />
         <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
         <Route path="/submit/action" element={<ActionTaskForm />} />
         <Route path="/action/:platform" element={<ActionPage />} />
