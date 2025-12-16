@@ -60,38 +60,64 @@ export default function App() {
 
   return (
     <Routes>
-      <Routes>
-  {/* 🌍 Public */}
-  <Route path="/" element={<HomePage />} />
-  <Route path="/login" element={<Login />} />
-  <Route path="/register" element={<Register />} />
-  <Route path="/forgot-password" element={<ForgotPassword />} />
+      {/* 🌍 Public pages without layout */}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-  {/* 🔐 Protected */}
-  <Route
-    element={
-      <RequireAuth>
-        <Layout />
-      </RequireAuth>
-    }
-  >
-    <Route path="/dashboard" element={<Dashboard />} />
-    <Route path="/profile" element={<Profile />} />
-    <Route path="/wallet" element={<Wallet />} />
-    <Route path="/history" element={<History />} />
-    <Route path="/edit-profile" element={<ProfileEditor />} />
-    {/* ...other protected routes */}
-  </Route>
+      {/* 🔐 Protected pages with layout */}
+      <Route
+        element={
+          <RequireAuth>
+            <Layout />
+          </RequireAuth>
+        }
+      >
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/edit-profile" element={<ProfileEditor />} />
 
-  {/* 🌐 Public with layout */}
-  <Route element={<Layout />}>
-    <Route path="/about" element={<About />} />
-    <Route path="/contact" element={<Contact />} />
-    <Route path="/leaderboard" element={<LeaderboardPage />} />
-  </Route>
+        {/* 🎥 Watch tasks */}
+        <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />
+        <Route path="/tasks/watch/tiktok" element={<WatchTikTok />} />
+        <Route path="/tasks/watch/facebook" element={<WatchFacebook />} />
+        <Route path="/tasks/watch/instagram" element={<WatchInstagram />} />
+        <Route path="/tasks/watch/twitter" element={<WatchTwitter />} />
 
-  {/* 🚫 Catch all */}
-  <Route path="*" element={<Navigate to="/" replace />} />
-</Routes>
+        {/* 📢 Promoted & Submissions */}
+        <Route
+          path="/promoted/watch/:platform"
+          element={<PromotedTasks type="watch" />}
+        />
+        <Route path="/submit/:platform" element={<WatchTaskFormWrapper />} />
+        <Route path="/submit/action" element={<ActionTaskForm />} />
+        <Route path="/action/:platform" element={<ActionPage />} />
+
+        {/* 🧑‍💼 Admin */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
+          }
+        />
+
+        {/* Support/contact link inside layout for logged-in users */}
+        <Route path="/contact" element={<Contact />} />
+      </Route>
+
+      {/* 🌐 Public pages with layout (like About, Leaderboard) */}
+      <Route element={<Layout />}>
+        <Route path="/about" element={<About />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+      </Route>
+
+      {/* 🚫 Catch all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
