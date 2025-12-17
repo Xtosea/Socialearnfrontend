@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import api from "../api/api";
+import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
+import { FaWhatsapp, FaTelegramPlane, FaTwitter, FaFacebookF } from "react-icons/fa";
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -74,52 +76,51 @@ export default function Contact() {
 
           <button
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-semibold transition"
+            className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-transform transform hover:scale-105"
           >
-            {loading ? "Sending..." : "Send Message"}
+            {loading ? "Sending..." : <>
+              <PaperAirplaneIcon className="w-5 h-5 transition-transform duration-300 hover:scale-110" />
+              Send Message
+            </>}
           </button>
         </form>
 
         {/* Quick Contact Buttons */}
         <div className="flex flex-wrap gap-4 justify-center mt-6">
-          {/* WhatsApp */}
           <a
             href="https://wa.me/2348012345678?text=Hello%20TrendWatch%20Support"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-500 px-5 py-3 rounded-xl font-semibold transition"
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-500 px-5 py-3 rounded-xl font-semibold transition-transform transform hover:scale-105"
           >
-            WhatsApp
+            <FaWhatsapp className="text-white w-5 h-5 transition-transform duration-300 hover:scale-110" /> WhatsApp
           </a>
 
-          {/* Telegram */}
           <a
             href="https://t.me/trendwatchsupport"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-5 py-3 rounded-xl font-semibold transition"
+            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-5 py-3 rounded-xl font-semibold transition-transform transform hover:scale-105"
           >
-            Telegram
+            <FaTelegramPlane className="text-white w-5 h-5 transition-transform duration-300 hover:scale-110" /> Telegram
           </a>
 
-          {/* Twitter */}
           <a
             href="https://twitter.com/trendwatchsupport"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 px-5 py-3 rounded-xl font-semibold transition"
+            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 px-5 py-3 rounded-xl font-semibold transition-transform transform hover:scale-105"
           >
-            Twitter
+            <FaTwitter className="text-white w-5 h-5 transition-transform duration-300 hover:scale-110" /> Twitter
           </a>
 
-          {/* Facebook */}
           <a
             href="https://facebook.com/trendwatchsupport"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-600 px-5 py-3 rounded-xl font-semibold transition"
+            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-600 px-5 py-3 rounded-xl font-semibold transition-transform transform hover:scale-105"
           >
-            Facebook
+            <FaFacebookF className="text-white w-5 h-5 transition-transform duration-300 hover:scale-110" /> Facebook
           </a>
         </div>
       </div>
