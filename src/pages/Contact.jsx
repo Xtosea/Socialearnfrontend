@@ -88,7 +88,7 @@ export default function Contact() {
         {/* Quick Contact Buttons */}
         <div className="flex flex-wrap gap-4 justify-center mt-6">
           <a
-            href="https://wa.me/2348012345678?text=Hello%20TrendWatch%20Support"
+            href="https://chat.whatsapp.com/HmrrTA2qasnHXYKFSe4yK3"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-green-600 hover:bg-green-500 px-5 py-3 rounded-xl font-semibold transition-transform transform hover:scale-105"
@@ -97,7 +97,7 @@ export default function Contact() {
           </a>
 
           <a
-            href="https://t.me/trendwatchsupport"
+            href="https://t.me/trendwatch2"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-5 py-3 rounded-xl font-semibold transition-transform transform hover:scale-105"
@@ -106,7 +106,7 @@ export default function Contact() {
           </a>
 
           <a
-            href="https://twitter.com/trendwatchsupport"
+            href="https://x.com/trendwatch25117"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 px-5 py-3 rounded-xl font-semibold transition-transform transform hover:scale-105"
@@ -115,7 +115,7 @@ export default function Contact() {
           </a>
 
           <a
-            href="https://facebook.com/trendwatchsupport"
+            href="https://facebook.com/trendwatch"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-blue-700 hover:bg-blue-600 px-5 py-3 rounded-xl font-semibold transition-transform transform hover:scale-105"
