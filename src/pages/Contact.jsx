@@ -81,7 +81,7 @@ export default function Contact() {
         </form>
 
         {/* Quick Contact Buttons */}
-        <div className="flex gap-4 justify-center mt-6">
+        <div className="flex flex-wrap gap-4 justify-center mt-6">
           {/* WhatsApp */}
           <a
             href="https://wa.me/2348012345678?text=Hello%20TrendWatch%20Support"
@@ -100,6 +100,26 @@ export default function Contact() {
             className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-5 py-3 rounded-xl font-semibold transition"
           >
             Telegram
+          </a>
+
+          {/* Twitter */}
+          <a
+            href="https://twitter.com/trendwatchsupport"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 px-5 py-3 rounded-xl font-semibold transition"
+          >
+            Twitter
+          </a>
+
+          {/* Facebook */}
+          <a
+            href="https://facebook.com/trendwatchsupport"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-600 px-5 py-3 rounded-xl font-semibold transition"
+          >
+            Facebook
           </a>
         </div>
       </div>
