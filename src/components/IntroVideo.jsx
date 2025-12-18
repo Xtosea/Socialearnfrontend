@@ -2,14 +2,14 @@ import React from "react";
 
 export default function IntroVideo() {
   return (
-    <section className="bg-black py-10 px-4">
-      <div className="max-w-3xl mx-auto"> {/* 👈 reduced width */}
+    <section className="bg-black py-8 px-4">
+      <div className="max-w-2xl mx-auto"> {/* 👈 smaller card */}
 
-        <h2 className="text-white text-xl md:text-2xl font-bold text-center mb-4">
+        <h2 className="text-white text-lg md:text-xl font-semibold text-center mb-3">
           How TrendWatch Works
         </h2>
 
-        <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+        <div className="relative w-full aspect-video rounded-md overflow-hidden shadow-md">
           <iframe
             src="https://www.youtube.com/embed/YOUTUBE_VIDEO_ID"
             title="How TrendWatch Works"
