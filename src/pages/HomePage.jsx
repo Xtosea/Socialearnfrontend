@@ -31,7 +31,7 @@ export default function HomePage() {
           property="og:image"
           content="https://trendwatch.i.ng/html.png"
         />
-        <meta property="og:url" content="https://Trendwatch.i.ng" />
+        <meta property="og:url" content="https://trendwatch.i.ng" />
         <meta property="og:type" content="website" />
 
         {/* Twitter / X */}
@@ -47,18 +47,13 @@ export default function HomePage() {
         />
       </Helmet>
 
-      {/* ================= HEADER / LOGO ================= */}
-      <header className="sticky top-0 z-50 bg-gray-900 border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
-          <img
-            src="/html.png"
-            alt="TrendWatch Logo"
-            className="h-10 w-auto object-contain"
-          />
-          <span className="text-xl font-bold text-white">
-            TrendWatch
-          </span>
-        </div>
+      {/* ================= FULL WIDTH HEADER BANNER ================= */}
+      <header className="w-full">
+        <img
+          src="/html.png"
+          alt="TrendWatch Header Banner"
+          className="w-full h-[260px] md:h-[320px] lg:h-[380px] object-cover"
+        />
       </header>
 
       {/* ================= PAGE CONTENT ================= */}
