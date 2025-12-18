@@ -1,6 +1,7 @@
 import React from "react";
 import { Helmet } from "react-helmet";
 
+import IntroVideo from "../components/IntroVideo";
 import HeroSection from "../components/HeroSection";
 import FeaturesSection from "../components/FeaturesSection";
 import HowItWorks from "../components/HowItWorks";
@@ -56,7 +57,10 @@ export default function HomePage() {
         />
       </header>
 
-      {/* ================= PAGE CONTENT ================= */}
+      {/* ================= INTRO VIDEO (NEW) ================= */}
+      <IntroVideo />
+
+      {/* ================= HERO SECTION ================= */}
       <HeroSection />
 
       <div id="features">
