@@ -10,10 +10,7 @@ export default function IntroVideo() {
         </h2>
 
         {/* Video Wrapper */}
-        <div
-          className="relative overflow-hidden rounded-lg shadow-md"
-          style={{ width: "90%", margin: "0 auto", paddingTop: "177.78%" }}
-        >
+        <div className="relative w-11/12 sm:w-10/12 md:w-3/4 lg:w-2/3 mx-auto overflow-hidden rounded-lg shadow-md" style={{ paddingTop: "177.78%" }}>
           {/* 9:16 aspect ratio for Shorts */}
           <iframe
             src="https://www.youtube.com/embed/bCJS3CIabyM"
