@@ -9,15 +9,16 @@ export default function IntroVideo() {
           How TrendWatch Works
         </h2>
 
-        {/* Video Card */}
-        <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-md">
+        {/* Video Wrapper */}
+        <div className="relative w-full overflow-hidden rounded-lg shadow-md" style={{ paddingTop: "177.78%" }}>
+          {/* 9:16 aspect ratio for Shorts */}
           <iframe
             src="https://www.youtube.com/embed/bCJS3CIabyM"
             title="How TrendWatch Works"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             loading="lazy"
-            className="absolute inset-0 w-full h-full"
+            className="absolute top-0 left-0 w-full h-full"
           />
         </div>
       </div>
