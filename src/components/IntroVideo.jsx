@@ -11,7 +11,7 @@ export default function IntroVideo() {
 
         <div className="relative w-full aspect-video rounded-md overflow-hidden shadow-md">
           <iframe
-            src="https://www.youtube.com/embed/YOUTUBE_VIDEO_ID"
+            src="https://youtube.com/shorts/bCJS3CIabyM?feature=share"
             title="How TrendWatch Works"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
