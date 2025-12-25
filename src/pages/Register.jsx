@@ -81,11 +81,25 @@ export default function Register() {
 
   const referralLocked = !!searchParams.get("ref");
 
+  // 🎄 Xmas Bonanza Dec 24-26
+  const now = new Date();
+  const month = now.getMonth(); // 0 = Jan, 11 = Dec
+  const date = now.getDate();
+  const isXmasBonanza = month === 11 && date >= 24 && date <= 26;
+
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
       <h2 className="text-2xl mb-6 text-center font-bold text-gray-800">
         Register
       </h2>
+
+      {/* Xmas Bonanza Banner */}
+      {isXmasBonanza && (
+        <div className="bg-red-100 border border-red-400 text-red-700 p-3 rounded-lg mb-4 text-center font-semibold">
+          🎄 Xmas Referral Bonanza! Get 1500 points for using a referral code! 🎁
+        </div>
+      )}
+
       <form onSubmit={submit} className="space-y-4">
         <input
           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
