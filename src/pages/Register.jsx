@@ -79,7 +79,8 @@ export default function Register() {
     }
   };
 
-  const referralLocked = !!searchParams.get("ref");
+  const referralFromUrl = searchParams.get("ref");
+  const referralLocked = !!referralFromUrl;
 
   // 🎄 Xmas Bonanza Dec 24-26
   const now = new Date();
@@ -149,7 +150,7 @@ export default function Register() {
           {dropdownOpen && (
             <ul className="absolute z-20 w-full max-h-52 overflow-y-auto bg-white border border-gray-300 rounded-lg mt-1 shadow-lg">
               {countries
-                .filter((c) => c.code) // ✅ Only allow valid options
+                .filter((c) => c.code)
                 .map((c) => (
                   <li
                     key={c.code}
