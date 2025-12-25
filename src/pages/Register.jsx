@@ -33,7 +33,7 @@ export default function Register() {
   const nav = useNavigate();
   const dropdownRef = useRef();
 
-  // ✅ Prefill referralCode from URL if present
+  // Prefill referralCode from URL if present
   useEffect(() => {
     const refFromUrl = searchParams.get("ref");
     if (refFromUrl) {
@@ -41,7 +41,7 @@ export default function Register() {
     }
   }, [searchParams]);
 
-  // ✅ Close dropdown when clicking outside
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -55,23 +55,31 @@ export default function Register() {
   const submit = async (e) => {
     e.preventDefault();
 
-    if (!form.country) {
+    // ✅ Validation
+    if (!form.username || !form.email || !form.password) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    if (!form.country || form.country === "") {
       alert("Please select a country");
       return;
     }
 
     setLoading(true);
     try {
+      console.log("Registering with:", form); // Debug log
       await register(form);
-      nav("/dashboard"); // ✅ go to Dashboard after register
+      nav("/dashboard");
     } catch (err) {
-      alert(err.response?.data?.message || "Register failed");
+      console.error(err);
+      alert(err.message || "Register failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const referralLocked = !!searchParams.get("ref"); // ✅ lock if from URL
+  const referralLocked = !!searchParams.get("ref");
 
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
@@ -112,7 +120,7 @@ export default function Register() {
           </button>
         </div>
 
-        {/* Country Dropdown (no typing) */}
+        {/* Country Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <div
             className={`w-full p-3 border rounded-lg cursor-pointer ${
@@ -126,23 +134,25 @@ export default function Register() {
           </div>
           {dropdownOpen && (
             <ul className="absolute z-20 w-full max-h-52 overflow-y-auto bg-white border border-gray-300 rounded-lg mt-1 shadow-lg">
-              {countries.map((c) => (
-                <li
-                  key={c.code}
-                  className="p-3 hover:bg-blue-100 cursor-pointer transition-colors"
-                  onClick={() => {
-                    setForm({ ...form, country: c.code });
-                    setDropdownOpen(false);
-                  }}
-                >
-                  {c.name}
-                </li>
-              ))}
+              {countries
+                .filter((c) => c.code) // ✅ Only allow valid options
+                .map((c) => (
+                  <li
+                    key={c.code}
+                    className="p-3 hover:bg-blue-100 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setForm({ ...form, country: c.code });
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    {c.name}
+                  </li>
+                ))}
             </ul>
           )}
         </div>
 
-        {/* Referral Code Input */}
+        {/* Referral Code */}
         <input
           className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
             referralLocked ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
