@@ -55,7 +55,6 @@ export default function Register() {
   const submit = async (e) => {
     e.preventDefault();
 
-    // ✅ Validation
     if (!form.username || !form.email || !form.password) {
       alert("Please fill all required fields");
       return;
@@ -68,7 +67,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      console.log("Registering with:", form); // Debug log
+      console.log("Registering with:", form);
       await register(form);
       nav("/dashboard");
     } catch (err) {
@@ -82,9 +81,9 @@ export default function Register() {
   const referralFromUrl = searchParams.get("ref");
   const referralLocked = !!referralFromUrl;
 
-  // 🎄 Xmas Bonanza Dec 24-26
+  // Xmas Bonanza Dec 24-26
   const now = new Date();
-  const month = now.getMonth(); // 0 = Jan, 11 = Dec
+  const month = now.getMonth();
   const date = now.getDate();
   const isXmasBonanza = month === 11 && date >= 24 && date <= 26;
 
@@ -94,7 +93,6 @@ export default function Register() {
         Register
       </h2>
 
-      {/* Xmas Bonanza Banner */}
       {isXmasBonanza && (
         <div className="bg-red-100 border border-red-400 text-red-700 p-3 rounded-lg mb-4 text-center font-semibold">
           🎄 Xmas Referral Bonanza! Get 1500 points for using a referral code! 🎁
@@ -168,17 +166,24 @@ export default function Register() {
         </div>
 
         {/* Referral Code */}
-        <input
-          className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-            referralLocked ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
-          }`}
-          placeholder="Referral Code (optional)"
-          value={form.referralCode}
-          onChange={(e) =>
-            !referralLocked && setForm({ ...form, referralCode: e.target.value })
-          }
-          readOnly={referralLocked}
-        />
+        <div>
+          <input
+            className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+              referralLocked ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
+            }`}
+            placeholder="Referral Code (optional)"
+            value={form.referralCode}
+            onChange={(e) =>
+              !referralLocked && setForm({ ...form, referralCode: e.target.value })
+            }
+            readOnly={referralLocked}
+          />
+          {form.referralCode && (
+            <p className="text-xs text-green-600 mt-1">
+              🎁 You will get bonus points for using this referral code!
+            </p>
+          )}
+        </div>
 
         <button
           type="submit"
