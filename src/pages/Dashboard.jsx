@@ -4,6 +4,8 @@ import { getVideoTasks } from "../api/tasks";
 import { getPromotionCosts } from "../api/promotion";
 import { Link } from "react-router-dom";
 import api from "../api/api";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   FaYoutube,
   FaFacebook,
@@ -62,16 +64,23 @@ export default function Dashboard() {
       try {
         const res = await api.post("/rewards/daily-login");
 
-        // Optional: update points immediately in UI
         if (res?.data?.earnedToday) {
+          // Update points in UI
           setUser((prev) => ({
             ...prev,
             points: prev.points + res.data.earnedToday,
           }));
+
+          // Toast notification
+          toast.success(
+            `🎉 Daily login reward: +${res.data.earnedToday} points!`
+          );
         }
       } catch (err) {
-        // Already claimed today → ignore
-        console.log(err.response?.data?.message);
+        // Already claimed → silent
+        if (err.response?.data?.message) {
+          console.log("Daily login:", err.response.data.message);
+        }
       }
     };
 
@@ -80,9 +89,19 @@ export default function Dashboard() {
     }
   }, [user?._id, setUser]);
 
+  // ================= MONTHLY PROGRESS =================
+  const monthlyProgress = user?.dailyLogin?.monthlyTarget
+    ? Math.min(
+        (user.dailyLogin.monthlyEarned / user.dailyLogin.monthlyTarget) * 100,
+        100
+      )
+    : 0;
+
   return (
     <div className="p-6 flex justify-center">
-      <div className="max-w-6xl w-full space-y-10">
+      <ToastContainer position="top-right" autoClose={4000} />
+
+      <div className="max-w-6xl w-full space-y-6">
         {/* Header */}
         <header className="text-center">
           <h2 className="text-3xl font-bold mb-2">
@@ -91,6 +110,18 @@ export default function Dashboard() {
           <p className="text-gray-600 text-lg">
             Total Points:{" "}
             <span className="font-semibold">{user?.points || 0}</span>
+          </p>
+
+          {/* Monthly Progress */}
+          <div className="mt-2 w-full bg-gray-200 rounded-full h-4">
+            <div
+              className="bg-green-500 h-4 rounded-full transition-all duration-500"
+              style={{ width: `${monthlyProgress}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-600 mt-1">
+            Monthly Progress: {user?.dailyLogin?.monthlyEarned || 0} /{" "}
+            {user?.dailyLogin?.monthlyTarget || 0}
           </p>
         </header>
 
@@ -143,13 +174,13 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Bonus */}
-        <div className="text-center mt-10">
+        {/* Bonus Offer */}
+        <div className="text-center mt-6">
           <button
             onClick={async () => {
               try {
                 const res = await api.post("/users/reward-trendwatch");
-                alert(res.data.message);
+                toast.success(res.data.message);
                 setUser((p) => ({ ...p, points: res.data.newPoints }));
                 window.open("https://otieu.com/4/10153446", "_blank");
               } catch {
