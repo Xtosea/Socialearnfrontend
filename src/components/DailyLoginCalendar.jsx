@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
-import api from "../api/api";
-
-let Confetti;
-if (typeof window !== "undefined") {
-  Confetti = require("react-confetti").default;
-}
+import axios from "../api/api"; // your axios instance
 
 export default function DailyLoginCalendar({ dailyLogin, setUser }) {
+  const [Confetti, setConfetti] = useState(null);
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
+
+  // Dynamic import react-confetti (client only)
+  useEffect(() => {
+    import("react-confetti").then((mod) => setConfetti(() => mod.default));
+  }, []);
 
   if (!dailyLogin) return null;
 
@@ -19,22 +20,21 @@ export default function DailyLoginCalendar({ dailyLogin, setUser }) {
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const hasClaimedToday = claimedDays.includes(today);
 
+  // ================= CLAIM REWARD =================
   const claimReward = async () => {
-    if (hasClaimedToday || loading) return;
+    if (hasClaimedToday) return;
     try {
       setLoading(true);
-      const res = await api.post("/rewards/daily-login");
-      if (res?.data) {
-        setUser((prev) => ({
-          ...prev,
-          points: res.data.newPoints,
-          dailyLogin: res.data.dailyLogin,
-        }));
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 5000);
-      }
+      const res = await axios.post("/rewards/daily-login");
+      setUser((prev) => ({
+        ...prev,
+        points: res.data.newPoints,
+        dailyLogin: res.data.dailyLogin,
+      }));
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 5000);
     } catch (err) {
-      alert(err?.response?.data?.message || "Claim failed");
+      alert(err.response?.data?.message || "Claim failed");
     } finally {
       setLoading(false);
     }
@@ -47,6 +47,7 @@ export default function DailyLoginCalendar({ dailyLogin, setUser }) {
     return "locked";
   };
 
+  // ================= COUNTDOWN TO NEXT DAY =================
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -59,7 +60,6 @@ export default function DailyLoginCalendar({ dailyLogin, setUser }) {
       const seconds = Math.floor((diff / 1000) % 60);
       setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -98,7 +98,7 @@ export default function DailyLoginCalendar({ dailyLogin, setUser }) {
               className={`p-3 rounded-lg text-center text-sm font-semibold
                 ${status === "claimed" && "bg-green-500 text-white"}
                 ${status === "missed" && "bg-gray-300 text-gray-500"}
-                ${status === "today" && "bg-blue-500 text-white animate-pulse"}
+                ${status === "today" && "bg-blue-500 text-white animate-pulse cursor-pointer"}
                 ${status === "locked" && "bg-gray-100 text-gray-400 cursor-not-allowed"}
               `}
             >
