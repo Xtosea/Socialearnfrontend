@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/api";
-import dynamic from "next/dynamic"; // optional if using Next.js, else skip
+
 let Confetti;
 if (typeof window !== "undefined") {
   Confetti = require("react-confetti").default;
