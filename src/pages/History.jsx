@@ -20,7 +20,7 @@ const createSocket = () => {
 
   return io(SOCKET_URL, {
     auth: { token: localStorage.getItem("token") },
-    transports: ["websocket"], // force websocket to avoid polling issues
+    transports: ["websocket"],
   });
 };
 
@@ -32,21 +32,21 @@ export default function History() {
   const [newEntryId, setNewEntryId] = useState(null);
   const socketRef = useRef(null);
 
-  // Calculate daily points
+  // Calculate daily points summary
   const calculateDailySummary = (hist) => {
     const summary = {};
     hist.forEach((h) => {
-      const dateKey = new Date(h.date || h.createdAt).toLocaleDateString();
+      const dateKey = new Date(h.createdAt).toLocaleDateString();
       if (!summary[dateKey]) summary[dateKey] = 0;
       summary[dateKey] += h.amount;
     });
     setDailySummary(summary);
   };
 
-  // Fetch wallet/history
+  // Fetch history & points
   const fetchHistory = async () => {
     try {
-      const res = await api.get("/wallet");
+      const res = await api.get("/wallet"); // should return { balance, history }
       const hist = res.data.history || [];
       setCurrentPoints(res.data.balance || 0);
       setHistory(hist);
@@ -60,31 +60,32 @@ export default function History() {
   useEffect(() => {
     fetchHistory();
 
+    // Create socket connection
     socketRef.current = createSocket();
 
-    socketRef.current.on("walletUpdated", (data) => {
-      if (data.userId === localStorage.getItem("userId")) {
-        setCurrentPoints(data.balance);
-        setHistory(data.history);
-        calculateDailySummary(data.history);
+    socketRef.current.on("pointsUpdate", async (data) => {
+      if (!data) return;
 
-        // Animate new entry
-        if (data.history.length > 0) {
-          setNewEntryId(data.history[data.history.length - 1]._id);
-          setTimeout(() => setNewEntryId(null), 3000);
-        }
+      // Optional: fetch full history for consistency
+      await fetchHistory();
 
-        toast.success("Wallet updated!");
+      // Highlight the newest entry if present
+      if (data.newEntryId) {
+        setNewEntryId(data.newEntryId);
+        setTimeout(() => setNewEntryId(null), 3000);
       }
+
+      toast.success("Points updated!");
     });
 
     return () => socketRef.current.disconnect();
   }, []);
 
-  // Group history by type
+  // Group history by taskType
   const grouped = history.reduce((acc, item) => {
-    if (!acc[item.type]) acc[item.type] = [];
-    acc[item.type].push(item);
+    const key = item.taskType || "other";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
     return acc;
   }, {});
 
@@ -96,6 +97,8 @@ export default function History() {
     transfer_out: "↗️ Sent Transfers",
     admin_add: "🛠️ Admin Added",
     admin_deduct: "🛠️ Admin Deducted",
+    "daily-login": "📅 Daily Login",
+    "daily-action": "⚡ Daily Action",
   };
 
   const grandTotals = history.reduce(
@@ -112,10 +115,10 @@ export default function History() {
 
   // CSV export
   const csvData = history.map((h) => ({
-    Type: typeLabels[h.type] || h.type,
+    Type: typeLabels[h.taskType] || h.taskType,
     Amount: h.amount,
     Description: h.description || "",
-    Date: new Date(h.date || h.createdAt).toLocaleString(),
+    Date: new Date(h.createdAt).toLocaleString(),
   }));
 
   // PDF export
@@ -128,10 +131,10 @@ export default function History() {
     doc.text("Wallet History", 14, 15);
 
     const rows = history.map((h) => [
-      typeLabels[h.type] || h.type,
+      typeLabels[h.taskType] || h.taskType,
       h.amount,
       h.description || "",
-      new Date(h.date || h.createdAt).toLocaleString(),
+      new Date(h.createdAt).toLocaleString(),
     ]);
 
     doc.autoTable({
@@ -251,7 +254,7 @@ export default function History() {
                   <AnimatePresence>
                     {items.map((h) => (
                       <motion.li
-                        key={h._id || `${h.type}-${Math.random()}`}
+                        key={h._id || `${h.taskType}-${Math.random()}`}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
@@ -260,7 +263,7 @@ export default function History() {
                           ${h._id === newEntryId ? "bg-yellow-100 animate-pulse" : ""}`}
                       >
                         <div className="flex justify-between items-center mb-2">
-                          <span className="font-semibold text-blue-700">{h.type}</span>
+                          <span className="font-semibold text-blue-700">{h.taskType}</span>
                           <span
                             className={`font-bold ${
                               h.amount >= 0 ? "text-green-600" : "text-red-600"
@@ -275,7 +278,7 @@ export default function History() {
                         )}
 
                         <div className="text-xs text-gray-500 mt-2">
-                          {new Date(h.date || h.createdAt).toLocaleString()}
+                          {new Date(h.createdAt).toLocaleString()}
                         </div>
                       </motion.li>
                     ))}
