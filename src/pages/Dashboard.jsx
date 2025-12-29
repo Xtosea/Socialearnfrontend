@@ -2,10 +2,13 @@ import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { getVideoTasks } from "../api/tasks";
 import { getPromotionCosts } from "../api/promotion";
+import { claimDailyLogin } from "../api/dailyLogin"; // ✅ add this
 import { Link } from "react-router-dom";
 import api from "../api/api";
+import DailyLoginCalendar from "../components/DailyLoginCalendar";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import {
   FaYoutube,
   FaFacebook,
@@ -18,8 +21,8 @@ export default function Dashboard() {
   const { user, setUser } = useContext(AuthContext);
   const [videos, setVideos] = useState([]);
   const [promotionCosts, setPromotionCosts] = useState({});
-  const [loadingTaskId, setLoadingTaskId] = useState(null);
 
+  // ================= ICONS =================
   const ICONS = {
     youtube: <FaYoutube size={24} />,
     facebook: <FaFacebook size={24} />,
@@ -28,6 +31,7 @@ export default function Dashboard() {
     tiktok: <FaTiktok size={24} />,
   };
 
+  // ================= PROMOTED CARDS =================
   const PROMOTED_CARDS = [
     { type: "watch", platform: "youtube", color: "bg-red-600", description: "Promote your YouTube video" },
     { type: "watch", platform: "facebook", color: "bg-blue-600", description: "Promote your Facebook video" },
@@ -46,6 +50,7 @@ export default function Dashboard() {
       try {
         const videoTasks = await getVideoTasks();
         const promotionCostsData = await getPromotionCosts();
+
         setVideos(videoTasks.data || []);
         setPromotionCosts(promotionCostsData.data || {});
       } catch (err) {
@@ -58,25 +63,29 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // ================= DAILY LOGIN REWARD =================
+  // ================= DAILY LOGIN CLAIM =================
   useEffect(() => {
-  const claim = async () => {
-    try {
-      const data = await claimDailyLogin(token);
+    const claim = async () => {
+      try {
+        const res = await claimDailyLogin();
 
-      if (data.earnedToday > 0) {
-        toast.success(
-          `🎁 Daily Login Reward: +${data.earnedToday} points`
-        );
-        setPoints((p) => p + data.earnedToday);
+        if (res.earnedToday > 0) {
+          toast.success(`🎁 Daily Login Reward: +${res.earnedToday} points`);
+
+          // ✅ update user safely
+          setUser((prev) => ({
+            ...prev,
+            points: res.newPoints,
+            dailyLogin: res.dailyLogin,
+          }));
+        }
+      } catch {
+        // silently skip if already claimed
       }
-    } catch (err) {
-      console.log("Daily login skipped");
-    }
-  };
+    };
 
-  claim();
-}, []);
+    claim();
+  }, [setUser]);
 
   // ================= MONTHLY PROGRESS =================
   const monthlyProgress = user?.dailyLogin?.monthlyTarget
@@ -91,30 +100,35 @@ export default function Dashboard() {
       <ToastContainer position="top-right" autoClose={4000} />
 
       <div className="max-w-6xl w-full space-y-6">
-        {/* Header */}
+
+        {/* ================= HEADER ================= */}
         <header className="text-center">
           <h2 className="text-3xl font-bold mb-2">
-            Welcome, {user?.username || "User"}!
+            Welcome, {user?.username || "User"} 👋
           </h2>
+
           <p className="text-gray-600 text-lg">
-            Total Points:{" "}
-            <span className="font-semibold">{user?.points || 0}</span>
+            Total Points: <span className="font-semibold">{user?.points || 0}</span>
           </p>
 
-          {/* Monthly Progress */}
-          <div className="mt-2 w-full bg-gray-200 rounded-full h-4">
+          {/* Monthly Progress Bar */}
+          <div className="mt-3 w-full bg-gray-200 rounded-full h-4">
             <div
               className="bg-green-500 h-4 rounded-full transition-all duration-500"
               style={{ width: `${monthlyProgress}%` }}
-            ></div>
+            />
           </div>
+
           <p className="text-xs text-gray-600 mt-1">
             Monthly Progress: {user?.dailyLogin?.monthlyEarned || 0} /{" "}
             {user?.dailyLogin?.monthlyTarget || 0}
           </p>
         </header>
 
-        {/* Promoted Tasks */}
+        {/* ================= DAILY LOGIN CALENDAR ================= */}
+        <DailyLoginCalendar dailyLogin={user?.dailyLogin} />
+
+        {/* ================= PROMOTED TASKS ================= */}
         <section>
           <h2 className="text-2xl font-semibold mb-4 text-center">
             Promoted Tasks & Submissions
@@ -136,12 +150,11 @@ export default function Dashboard() {
                 <div key={card.platform + card.type} className="space-y-3">
                   <Link
                     to={performLink}
-                    className={`w-full block p-4 rounded-xl shadow-md text-white ${card.color} hover:scale-105 transition`}
+                    className={`block p-4 rounded-xl shadow-md text-white ${card.color} hover:scale-105 transition`}
                   >
                     <div className="flex justify-between items-center">
                       <h3 className="font-bold capitalize">
-                        {card.platform}{" "}
-                        {card.type === "watch" ? "Views" : "Actions"}
+                        {card.platform} {card.type === "watch" ? "Views" : "Actions"}
                       </h3>
                       {ICONS[card.platform]}
                     </div>
@@ -163,14 +176,19 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Bonus Offer */}
+        {/* ================= BONUS OFFER ================= */}
         <div className="text-center mt-6">
           <button
             onClick={async () => {
               try {
                 const res = await api.post("/users/reward-trendwatch");
                 toast.success(res.data.message);
-                setUser((p) => ({ ...p, points: res.data.newPoints }));
+
+                setUser((prev) => ({
+                  ...prev,
+                  points: res.data.newPoints,
+                }));
+
                 window.open("https://otieu.com/4/10153446", "_blank");
               } catch {
                 window.open("https://otieu.com/4/10153446", "_blank");
