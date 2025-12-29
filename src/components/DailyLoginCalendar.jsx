@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import axios from "../api/axios";
+import Confetti from "react-confetti";
 
 export default function DailyLoginCalendar({ dailyLogin, refreshUser }) {
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const today = new Date().getDate();
   if (!dailyLogin) return null;
@@ -19,6 +21,10 @@ export default function DailyLoginCalendar({ dailyLogin, refreshUser }) {
       setLoading(true);
       await axios.post("/rewards/daily-login");
       await refreshUser();
+      setShowConfetti(true);
+
+      // Stop confetti after 5s
+      setTimeout(() => setShowConfetti(false), 5000);
     } catch (err) {
       alert(err.response?.data?.message || "Claim failed");
     } finally {
@@ -50,24 +56,21 @@ export default function DailyLoginCalendar({ dailyLogin, refreshUser }) {
   }, []);
 
   return (
-    <div className="mt-6 bg-white p-4 rounded-xl shadow">
-      <h3 className="font-bold text-lg mb-2 text-center">
-        Daily Login Rewards
-      </h3>
+    <div className="mt-6 bg-white p-4 rounded-xl shadow relative">
+      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
 
-      {/* Countdown */}
+      <h3 className="font-bold text-lg mb-2 text-center">Daily Login Rewards</h3>
+
       {!hasClaimedToday && (
         <p className="text-center text-sm text-gray-600 mb-2">
           Next claim available in: {timeLeft}
         </p>
       )}
 
-      {/* Streak */}
       <p className="text-center text-sm font-semibold mb-4">
         Current Streak: {streak} {streak % 7 === 0 && streak !== 0 && "🔥 7-day bonus!"}
       </p>
 
-      {/* Calendar */}
       <div className="grid grid-cols-7 gap-2">
         {days.map((day) => {
           const status = getStatus(day);
@@ -84,10 +87,8 @@ export default function DailyLoginCalendar({ dailyLogin, refreshUser }) {
               className={`p-3 rounded-lg text-center text-sm font-semibold
                 ${status === "claimed" && "bg-green-500 text-white"}
                 ${status === "missed" && "bg-gray-300 text-gray-500"}
-                ${status === "today" &&
-                  "bg-blue-500 text-white animate-pulse"}
-                ${status === "locked" &&
-                  "bg-gray-100 text-gray-400 cursor-not-allowed"}
+                ${status === "today" && "bg-blue-500 text-white animate-pulse"}
+                ${status === "locked" && "bg-gray-100 text-gray-400 cursor-not-allowed"}
               `}
             >
               {day}
@@ -96,16 +97,11 @@ export default function DailyLoginCalendar({ dailyLogin, refreshUser }) {
         })}
       </div>
 
-      {/* Claim Button */}
       <button
         onClick={claimReward}
         disabled={hasClaimedToday || loading}
         className={`w-full mt-4 py-3 rounded-lg font-semibold text-white
-          ${
-            hasClaimedToday
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }
+          ${hasClaimedToday ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
         `}
       >
         {hasClaimedToday
@@ -115,7 +111,6 @@ export default function DailyLoginCalendar({ dailyLogin, refreshUser }) {
           : "🎁 Claim Today’s Reward"}
       </button>
 
-      {/* Mega bonus notification */}
       {claimedDays.length === daysInMonth && (
         <p className="text-center mt-2 font-bold text-yellow-600">
           🎉 Mega 30-day bonus available!
