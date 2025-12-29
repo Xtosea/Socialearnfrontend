@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { getVideoTasks } from "../api/tasks";
 import { getPromotionCosts } from "../api/promotion";
-//import { claimDailyLogin } from "../api/dailyLogin"; // ✅ add this
 import { Link } from "react-router-dom";
 import api from "../api/api";
 import DailyLoginCalendar from "../components/DailyLoginCalendar";
@@ -21,6 +20,7 @@ export default function Dashboard() {
   const { user, setUser } = useContext(AuthContext);
   const [videos, setVideos] = useState([]);
   const [promotionCosts, setPromotionCosts] = useState({});
+  const [loading, setLoading] = useState(true);
 
   // ================= ICONS =================
   const ICONS = {
@@ -48,22 +48,26 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const videoTasks = await getVideoTasks();
-        const promotionCostsData = await getPromotionCosts();
+        setLoading(true);
+        const [videoTasks, promotionCostsData] = await Promise.all([
+          getVideoTasks(),
+          getPromotionCosts(),
+        ]);
 
         setVideos(videoTasks.data || []);
         setPromotionCosts(promotionCostsData.data || {});
       } catch (err) {
         console.error("Dashboard fetch error:", err);
+        toast.error("Failed to fetch dashboard data");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 30000); // refresh every 30s
     return () => clearInterval(interval);
   }, []);
-
-  
 
   // ================= MONTHLY PROGRESS =================
   const monthlyProgress = user?.dailyLogin?.monthlyTarget
@@ -78,7 +82,6 @@ export default function Dashboard() {
       <ToastContainer position="top-right" autoClose={4000} />
 
       <div className="max-w-6xl w-full space-y-6">
-
         {/* ================= HEADER ================= */}
         <header className="text-center">
           <h2 className="text-3xl font-bold mb-2">
@@ -104,10 +107,30 @@ export default function Dashboard() {
         </header>
 
         {/* ================= DAILY LOGIN CALENDAR ================= */}
-      <DailyLoginCalendar dailyLogin={user?.dailyLogin} setUser={setUser} />
+        <DailyLoginCalendar dailyLogin={user?.dailyLogin} setUser={setUser} />
+
+        {/* ================= LOADING INDICATOR ================= */}
+        {loading && (
+          <p className="text-center text-gray-500 mt-4">Loading dashboard data...</p>
+        )}
+
+        {/* ================= VIDEO TASKS ================= */}
+        {videos.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-2xl font-semibold mb-4 text-center">Your Video Tasks</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {videos.map((video) => (
+                <div key={video._id} className="p-3 border rounded-lg shadow-sm">
+                  <p className="font-semibold">{video.title}</p>
+                  <p className="text-sm text-gray-500">Points: {video.points}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ================= PROMOTED TASKS ================= */}
-        <section>
+        <section className="mt-6">
           <h2 className="text-2xl font-semibold mb-4 text-center">
             Promoted Tasks & Submissions
           </h2>
@@ -124,8 +147,10 @@ export default function Dashboard() {
                   ? `/submit/${card.platform}`
                   : `/submit/action`;
 
+              const cost = promotionCosts?.[card.type]?.[card.platform] || 0;
+
               return (
-                <div key={card.platform + card.type} className="space-y-3">
+                <div key={card.platform + card.type} className="space-y-2">
                   <Link
                     to={performLink}
                     className={`block p-4 rounded-xl shadow-md text-white ${card.color} hover:scale-105 transition`}
@@ -139,7 +164,7 @@ export default function Dashboard() {
                   </Link>
 
                   <p className="text-xs text-center text-gray-600">
-                    {card.description}
+                    {card.description} | Cost: {cost} pts
                   </p>
 
                   <Link
