@@ -56,6 +56,14 @@ api.interceptors.response.use(
   }
 );
 
+// Inside src/api/api.js
+
+// =========================================================
+// 🎁 DAILY LOGIN / REWARD ROUTES
+// =========================================================
+export const claimDailyLogin = () => api.post("/rewards/daily-login");
+export const getDailyLoginStatus = () => api.get("/rewards/daily-login"); // optional, if you want to fetch calendar info
+
 // =========================================================
 // 👤 AUTH ROUTES
 // =========================================================
