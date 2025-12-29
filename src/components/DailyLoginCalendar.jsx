@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../api/axios";
+import api from "../api/api";
 import Confetti from "react-confetti";
 
 export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
