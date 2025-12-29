@@ -40,7 +40,6 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
     return "locked";
   };
 
-  // Countdown to next day
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -61,19 +60,15 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
   return (
     <div className="mt-6 bg-white p-4 rounded-xl shadow relative">
       {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
-
       <h3 className="font-bold text-lg mb-2 text-center">Daily Login Rewards</h3>
-
       {!hasClaimedToday && (
         <p className="text-center text-sm text-gray-600 mb-2">
           Next claim available in: {timeLeft}
         </p>
       )}
-
       <p className="text-center text-sm font-semibold mb-4">
         Current Streak: {streak} {streak % 7 === 0 && streak !== 0 && "🔥 7-day bonus!"}
       </p>
-
       <div className="grid grid-cols-7 gap-2">
         {days.map((day) => {
           const status = getStatus(day);
@@ -99,7 +94,6 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
           );
         })}
       </div>
-
       <button
         onClick={claimReward}
         disabled={hasClaimedToday || loading}
@@ -107,13 +101,8 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
           ${hasClaimedToday ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
         `}
       >
-        {hasClaimedToday
-          ? "Already Claimed Today"
-          : loading
-          ? "Claiming..."
-          : "🎁 Claim Today’s Reward"}
+        {hasClaimedToday ? "Already Claimed Today" : loading ? "Claiming..." : "🎁 Claim Today’s Reward"}
       </button>
-
       {claimedDays.length === daysInMonth && (
         <p className="text-center mt-2 font-bold text-yellow-600">
           🎉 Mega 30-day bonus available!
@@ -122,33 +111,3 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
     </div>
   );
 }
-
-
----
-
-✅ Improvements
-
-1. Handles null or undefined dailyLogin safely.
-
-
-2. Provides fallback defaults for month, year, claimedDays, and streak.
-
-
-3. Updates user with new dailyLogin and points after claiming.
-
-
-4. Loading state prevents multiple claims at the same time.
-
-
-5. Confetti only triggers when reward is successfully claimed.
-
-
-6. Countdown works even if some values are missing.
-
-
-
-This combined with the safe Dashboard ensures that login → dashboard flow will no longer crash.
-
-I can also fix your React is not defined error for Vite builds next if you want — that’s likely causing the blank dashboard.
-
-Do you want me to fix that too?
