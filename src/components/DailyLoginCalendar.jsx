@@ -1,5 +1,3 @@
-Perfect! Here’s a safe and stable DailyLoginCalendar component that won’t crash if dailyLogin is null or incomplete:
-
 import React, { useState, useEffect } from "react";
 import axios from "../api/axios";
 import Confetti from "react-confetti";
