@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { getVideoTasks } from "../api/tasks";
 import { getPromotionCosts } from "../api/promotion";
-import { claimDailyLogin } from "../api/dailyLogin"; // ✅ add this
+//import { claimDailyLogin } from "../api/dailyLogin"; // ✅ add this
 import { Link } from "react-router-dom";
 import api from "../api/api";
 import DailyLoginCalendar from "../components/DailyLoginCalendar";
@@ -63,29 +63,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // ================= DAILY LOGIN CLAIM =================
-  useEffect(() => {
-    const claim = async () => {
-      try {
-        const res = await claimDailyLogin();
-
-        if (res.earnedToday > 0) {
-          toast.success(`🎁 Daily Login Reward: +${res.earnedToday} points`);
-
-          // ✅ update user safely
-          setUser((prev) => ({
-            ...prev,
-            points: res.newPoints,
-            dailyLogin: res.dailyLogin,
-          }));
-        }
-      } catch {
-        // silently skip if already claimed
-      }
-    };
-
-    claim();
-  }, [setUser]);
+  
 
   // ================= MONTHLY PROGRESS =================
   const monthlyProgress = user?.dailyLogin?.monthlyTarget
