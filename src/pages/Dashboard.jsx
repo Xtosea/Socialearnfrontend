@@ -8,13 +8,7 @@ import DailyLoginCalendar from "../components/DailyLoginCalendar";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import {
-  FaYoutube,
-  FaFacebook,
-  FaInstagram,
-  FaTwitter,
-  FaTiktok,
-} from "react-icons/fa";
+import { FaYoutube, FaFacebook, FaInstagram, FaTwitter, FaTiktok } from "react-icons/fa";
 
 export default function Dashboard() {
   const { user, setUser } = useContext(AuthContext);
@@ -36,7 +30,6 @@ export default function Dashboard() {
     { type: "watch", platform: "youtube", color: "bg-red-600", description: "Promote your YouTube video" },
     { type: "watch", platform: "facebook", color: "bg-blue-600", description: "Promote your Facebook video" },
     { type: "watch", platform: "tiktok", color: "bg-pink-600", description: "Promote your TikTok video" },
-
     { type: "action", platform: "youtube", color: "bg-red-500", description: "Promote your YouTube channel" },
     { type: "action", platform: "facebook", color: "bg-blue-500", description: "Promote your Facebook page" },
     { type: "action", platform: "tiktok", color: "bg-purple-500", description: "Promote your TikTok page" },
@@ -47,6 +40,7 @@ export default function Dashboard() {
   // ================= FETCH DASHBOARD DATA =================
   useEffect(() => {
     const fetchData = async () => {
+      if (!user) return; // wait for user
       try {
         setLoading(true);
         const [videoTasks, promotionCostsData] = await Promise.all([
@@ -54,8 +48,8 @@ export default function Dashboard() {
           getPromotionCosts(),
         ]);
 
-        setVideos(videoTasks.data || []);
-        setPromotionCosts(promotionCostsData.data || {});
+        setVideos(videoTasks?.data || []);
+        setPromotionCosts(promotionCostsData?.data || {});
       } catch (err) {
         console.error("Dashboard fetch error:", err);
         toast.error("Failed to fetch dashboard data");
@@ -67,15 +61,20 @@ export default function Dashboard() {
     fetchData();
     const interval = setInterval(fetchData, 30000); // refresh every 30s
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
+
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
 
   // ================= MONTHLY PROGRESS =================
-  const monthlyProgress = user?.dailyLogin?.monthlyTarget
-    ? Math.min(
-        (user.dailyLogin.monthlyEarned / user.dailyLogin.monthlyTarget) * 100,
-        100
-      )
-    : 0;
+  const monthlyTarget = user.dailyLogin?.monthlyTarget || 0;
+  const monthlyEarned = user.dailyLogin?.monthlyEarned || 0;
+  const monthlyProgress = monthlyTarget ? Math.min((monthlyEarned / monthlyTarget) * 100, 100) : 0;
 
   return (
     <div className="p-6 flex justify-center">
@@ -85,11 +84,11 @@ export default function Dashboard() {
         {/* ================= HEADER ================= */}
         <header className="text-center">
           <h2 className="text-3xl font-bold mb-2">
-            Welcome, {user?.username || "User"} 👋
+            Welcome, {user.username || "User"} 👋
           </h2>
 
           <p className="text-gray-600 text-lg">
-            Total Points: <span className="font-semibold">{user?.points || 0}</span>
+            Total Points: <span className="font-semibold">{user.points || 0}</span>
           </p>
 
           {/* Monthly Progress Bar */}
@@ -101,13 +100,12 @@ export default function Dashboard() {
           </div>
 
           <p className="text-xs text-gray-600 mt-1">
-            Monthly Progress: {user?.dailyLogin?.monthlyEarned || 0} /{" "}
-            {user?.dailyLogin?.monthlyTarget || 0}
+            Monthly Progress: {monthlyEarned} / {monthlyTarget}
           </p>
         </header>
 
         {/* ================= DAILY LOGIN CALENDAR ================= */}
-        <DailyLoginCalendar dailyLogin={user?.dailyLogin} setUser={setUser} />
+        <DailyLoginCalendar dailyLogin={user.dailyLogin || {}} setUser={setUser} />
 
         {/* ================= LOADING INDICATOR ================= */}
         {loading && (
@@ -137,16 +135,8 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {PROMOTED_CARDS.map((card) => {
-              const performLink =
-                card.type === "watch"
-                  ? `/promoted/watch/${card.platform}`
-                  : `/action/${card.platform}`;
-
-              const submitLink =
-                card.type === "watch"
-                  ? `/submit/${card.platform}`
-                  : `/submit/action`;
-
+              const performLink = card.type === "watch" ? `/promoted/watch/${card.platform}` : `/action/${card.platform}`;
+              const submitLink = card.type === "watch" ? `/submit/${card.platform}` : `/submit/action`;
               const cost = promotionCosts?.[card.type]?.[card.platform] || 0;
 
               return (
