@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { getVideoTasks, promoteTask } from "../api/tasks";
+import { getVideoTasks } from "../api/tasks";
 import { getPromotionCosts } from "../api/promotion";
 import { Link } from "react-router-dom";
 import api from "../api/api";
@@ -38,6 +38,7 @@ export default function Dashboard() {
     { type: "action", platform: "instagram", color: "bg-pink-500", description: "Promote your Instagram page" },
   ];
 
+  // ================= FETCH DASHBOARD DATA =================
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -55,6 +56,30 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // ================= DAILY LOGIN REWARD =================
+  useEffect(() => {
+    const claimDailyLogin = async () => {
+      try {
+        const res = await api.post("/rewards/daily-login");
+
+        // Optional: update points immediately in UI
+        if (res?.data?.earnedToday) {
+          setUser((prev) => ({
+            ...prev,
+            points: prev.points + res.data.earnedToday,
+          }));
+        }
+      } catch (err) {
+        // Already claimed today → ignore
+        console.log(err.response?.data?.message);
+      }
+    };
+
+    if (user?._id) {
+      claimDailyLogin();
+    }
+  }, [user?._id, setUser]);
+
   return (
     <div className="p-6 flex justify-center">
       <div className="max-w-6xl w-full space-y-10">
@@ -64,7 +89,8 @@ export default function Dashboard() {
             Welcome, {user?.username || "User"}!
           </h2>
           <p className="text-gray-600 text-lg">
-            Total Points: <span className="font-semibold">{user?.points || 0}</span>
+            Total Points:{" "}
+            <span className="font-semibold">{user?.points || 0}</span>
           </p>
         </header>
 
@@ -94,7 +120,8 @@ export default function Dashboard() {
                   >
                     <div className="flex justify-between items-center">
                       <h3 className="font-bold capitalize">
-                        {card.platform} {card.type === "watch" ? "Views" : "Actions"}
+                        {card.platform}{" "}
+                        {card.type === "watch" ? "Views" : "Actions"}
                       </h3>
                       {ICONS[card.platform]}
                     </div>
