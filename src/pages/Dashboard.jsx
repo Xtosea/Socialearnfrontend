@@ -126,7 +126,7 @@ export default function Dashboard() {
         </header>
 
         {/* ================= DAILY LOGIN CALENDAR ================= */}
-        <DailyLoginCalendar dailyLogin={user?.dailyLogin} />
+      <DailyLoginCalendar dailyLogin={user?.dailyLogin} setUser={setUser} />
 
         {/* ================= PROMOTED TASKS ================= */}
         <section>
