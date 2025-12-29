@@ -60,36 +60,23 @@ export default function Dashboard() {
 
   // ================= DAILY LOGIN REWARD =================
   useEffect(() => {
-  const claimDailyLogin = async () => {
+  const claim = async () => {
     try {
-      const res = await api.post("/rewards/daily-login");
+      const data = await claimDailyLogin(token);
 
-      if (res?.data?.earnedToday > 0) {
-        setUser((prev) => ({
-          ...prev,
-          points: res.data.newPoints,
-          dailyLogin: res.data.dailyLogin,
-        }));
-
+      if (data.earnedToday > 0) {
         toast.success(
-          `🎉 Daily login reward: +${res.data.earnedToday} points!`
+          `🎁 Daily Login Reward: +${data.earnedToday} points`
         );
-      } else if (res?.data?.dailyLogin) {
-        // already claimed → still sync progress
-        setUser((prev) => ({
-          ...prev,
-          dailyLogin: res.data.dailyLogin,
-        }));
+        setPoints((p) => p + data.earnedToday);
       }
     } catch (err) {
       console.log("Daily login skipped");
     }
   };
 
-  if (user?._id) {
-    claimDailyLogin();
-  }
-}, [user?._id, setUser]);
+  claim();
+}, []);
 
   // ================= MONTHLY PROGRESS =================
   const monthlyProgress = user?.dailyLogin?.monthlyTarget
