@@ -71,16 +71,7 @@ export default function Dashboard() {
     );
   }
 
-  // ================= MONTHLY PROGRESS =================
-  const monthlyTarget = user.dailyLogin?.monthlyTarget || 0;
-  const monthlyEarned = user.dailyLogin?.monthlyEarned || 0;
-  const monthlyProgress = monthlyTarget ? Math.min((monthlyEarned / monthlyTarget) * 100, 100) : 0;
-
-  return (
-    <div className="p-6 flex justify-center">
-      <ToastContainer position="top-right" autoClose={4000} />
-
-      <div className="max-w-6xl w-full space-y-6">
+  
         {/* ================= HEADER ================= */}
         <header className="text-center">
           <h2 className="text-3xl font-bold mb-2">
