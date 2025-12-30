@@ -7,11 +7,11 @@ import api from "../api/api";
 
 export default function Profile() {
   const { user, setUser, updateProfile } = useContext(AuthContext);
-  const { id } = useParams(); // /profile/:id
-
+  const { id } = useParams();
   const isOwnProfile = !id || id === user?._id;
 
   const [viewedUser, setViewedUser] = useState(null);
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
   const profileUser = isOwnProfile ? user : viewedUser;
 
   const [editing, setEditing] = useState(false);
@@ -35,6 +35,7 @@ export default function Profile() {
       setDob(user.dob || "");
       setCountry(user.country || "");
       setProfilePicture(user.profilePicture || "");
+      fetchSuggestedUsers(); // fetch other users to follow
     } else {
       const fetchUser = async () => {
         try {
@@ -48,7 +49,15 @@ export default function Profile() {
     }
   }, [user, id, isOwnProfile]);
 
-  if (!profileUser) return <div>Loading profile...</div>;
+  /* ================= SUGGESTED USERS ================= */
+  const fetchSuggestedUsers = async () => {
+    try {
+      const res = await api.get("/users/suggested"); // backend route returning users except current user
+      setSuggestedUsers(res.data);
+    } catch (err) {
+      console.error("Failed to fetch suggested users", err);
+    }
+  };
 
   /* ================= HELPERS ================= */
   const showToast = (type, message) => {
@@ -63,11 +72,11 @@ export default function Profile() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  /* ================= REFRESH PROFILE ================= */
   const refreshProfile = async () => {
     if (isOwnProfile) {
       const res = await api.get("/users/me");
       setUser(res.data);
+      fetchSuggestedUsers();
     } else {
       const res = await api.get(`/users/${profileUser._id}`);
       setViewedUser(res.data);
@@ -124,6 +133,8 @@ export default function Profile() {
       setLoadingText("");
     }
   };
+
+  if (!profileUser) return <div>Loading profile...</div>;
 
   return (
     <div className="relative p-6 max-w-2xl mx-auto">
@@ -191,25 +202,43 @@ export default function Profile() {
 
             <p>
               <Users className="inline w-4 h-4 mr-2 text-blue-500" />
-              <strong>Followers:</strong>{" "}
-              {profileUser.followers?.length || 0} ·{" "}
-              <strong>Following:</strong>{" "}
-              {profileUser.following?.length || 0}
+              <strong>Followers:</strong> {profileUser.followers?.length || 0} ·{" "}
+              <strong>Following:</strong> {profileUser.following?.length || 0}
             </p>
 
             <p>
               <strong>Points:</strong>{" "}
               <span className="text-green-600 font-semibold">
-                {profileUser.points}
+                {profileUser.points || 0}
               </span>
             </p>
           </div>
         </div>
       </div>
 
+      {/* REFERRAL LINK */}
+      {isOwnProfile && (
+        <div className="mt-4 bg-gray-50 p-3 rounded-lg">
+          <p className="text-sm text-gray-600 mb-2 font-medium">
+            Invite friends and earn rewards
+          </p>
+          <div className="flex items-center justify-between bg-white border rounded-lg p-2">
+            <span className="truncate text-gray-700 text-sm">
+              {`${window.location.origin}/register?ref=${user.referralCode}`}
+            </span>
+            <button
+              onClick={handleCopyReferral}
+              className="ml-3 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* EDIT PROFILE (OWN PROFILE ONLY) */}
       {isOwnProfile && (
-        <div className="bg-white rounded-xl shadow p-5">
+        <div className="bg-white rounded-xl shadow p-5 mb-6">
           <h3 className="text-lg font-semibold mb-4">Edit Details</h3>
 
           <div className="space-y-4">
@@ -282,6 +311,41 @@ export default function Profile() {
                 Edit Profile
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* SUGGESTED USERS / FOLLOW */}
+      {isOwnProfile && suggestedUsers.length > 0 && (
+        <div className="bg-white rounded-xl shadow p-5">
+          <h3 className="text-lg font-semibold mb-4">Suggested Users to Follow</h3>
+          <div className="flex flex-col gap-3">
+            {suggestedUsers.map((u) => {
+              const alreadyFollowing = user.following?.includes(u._id);
+              const isFollower = user.followers?.includes(u._id);
+
+              return (
+                <div
+                  key={u._id}
+                  className="flex items-center justify-between p-2 border rounded"
+                >
+                  <div className="flex items-center gap-2">
+                    <span>@{u.username}</span>
+                    {isFollower && !alreadyFollowing && (
+                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+                        Follows you
+                      </span>
+                    )}
+                  </div>
+
+                  <FollowButton
+                    targetUserId={u._id}
+                    isFollowing={alreadyFollowing}
+                    onUpdate={refreshProfile}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
