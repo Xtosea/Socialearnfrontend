@@ -75,8 +75,8 @@ export const updateUserProfile = (data) => api.put("/users/me", data);
 // =========================================================
 // 👥 USER ROUTES
 // =========================================================
-export const followUser = (userId) => api.post(`/users/follow/${userId}`);
-export const unfollowUser = (userId) => api.post(`/users/unfollow/${userId}`);
+export const followUser = (userId) => api.put(`/users/follow/${userId}`);
+export const unfollowUser = (userId) => api.put(`/users/unfollow/${userId}`);
 export const getReferrals = () => api.get("/users/referrals");
 export const getLeaderboard = (limit = 3) =>
   api.get(`/users/leaderboard?limit=${limit}`);
