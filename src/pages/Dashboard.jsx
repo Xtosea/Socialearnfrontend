@@ -84,18 +84,7 @@ export default function Dashboard() {
 
 
 
-          {/* Monthly Progress Bar */}
-          <div className="mt-3 w-full bg-gray-200 rounded-full h-4">
-            <div
-              className="bg-green-500 h-4 rounded-full transition-all duration-500"
-              style={{ width: `${monthlyProgress}%` }}
-            />
-          </div>
-
-          <p className="text-xs text-gray-600 mt-1">
-            Monthly Progress: {monthlyEarned} / {monthlyTarget}
-          </p>
-        </header>
+          
 
         {/* ================= DAILY LOGIN CALENDAR ================= */}
         <DailyLoginCalendar dailyLogin={user.dailyLogin || {}} setUser={setUser} />
