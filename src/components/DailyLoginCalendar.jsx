@@ -1,29 +1,33 @@
-import React, { useState, useEffect } from "react";
-import api from "../api/api";
+import React, { useState, useEffect, useContext } from "react";
+import api from "../api/api"; // Use your API instance
 import Confetti from "react-confetti";
+import { AuthContext } from "../context/AuthContext";
 
-export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
+export default function DailyLoginCalendar({ dailyLogin }) {
+  const { user, setUser } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
 
-  const today = new Date().getDate();
-  const { claimedDays = [], month = new Date().getMonth(), year = new Date().getFullYear(), streak = 0 } = dailyLogin;
+  if (!dailyLogin) return null;
 
+  const today = new Date().getDate();
+  const { claimedDays = [], month, year, streak = 0 } = dailyLogin;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const hasClaimedToday = claimedDays.includes(today);
 
   const claimReward = async () => {
     if (hasClaimedToday) return;
+
     try {
       setLoading(true);
       const res = await axios.post("/rewards/daily-login");
-      setUser(prev => ({
-        ...prev,
-        dailyLogin: res.data.dailyLogin,
-        points: res.data.points,
-      }));
+
+      // Update AuthContext user immediately with the latest data
+      setUser(res.data.user);
+
+      // Show confetti for 5 seconds
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
     } catch (err) {
@@ -40,6 +44,7 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
     return "locked";
   };
 
+  // Countdown to next day
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -55,20 +60,22 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
     return () => clearInterval(interval);
   }, []);
 
-  if (!dailyLogin) return null;
-
   return (
     <div className="mt-6 bg-white p-4 rounded-xl shadow relative">
       {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
+
       <h3 className="font-bold text-lg mb-2 text-center">Daily Login Rewards</h3>
+
       {!hasClaimedToday && (
         <p className="text-center text-sm text-gray-600 mb-2">
           Next claim available in: {timeLeft}
         </p>
       )}
+
       <p className="text-center text-sm font-semibold mb-4">
         Current Streak: {streak} {streak % 7 === 0 && streak !== 0 && "🔥 7-day bonus!"}
       </p>
+
       <div className="grid grid-cols-7 gap-2">
         {days.map((day) => {
           const status = getStatus(day);
@@ -94,6 +101,7 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
           );
         })}
       </div>
+
       <button
         onClick={claimReward}
         disabled={hasClaimedToday || loading}
@@ -101,8 +109,13 @@ export default function DailyLoginCalendar({ dailyLogin = {}, setUser }) {
           ${hasClaimedToday ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
         `}
       >
-        {hasClaimedToday ? "Already Claimed Today" : loading ? "Claiming..." : "🎁 Claim Today’s Reward"}
+        {hasClaimedToday
+          ? "Already Claimed Today"
+          : loading
+          ? "Claiming..."
+          : "🎁 Claim Today’s Reward"}
       </button>
+
       {claimedDays.length === daysInMonth && (
         <p className="text-center mt-2 font-bold text-yellow-600">
           🎉 Mega 30-day bonus available!
