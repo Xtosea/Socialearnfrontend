@@ -1,9 +1,19 @@
 import React, { useContext, useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { Copy, CheckCircle, Globe, Users, Upload, Loader2 } from "lucide-react";
+import FollowButton from "../components/FollowButton";
+import api from "../api/api";
 
 export default function Profile() {
   const { user, setUser, updateProfile } = useContext(AuthContext);
+  const { id } = useParams(); // /profile/:id
+
+  const isOwnProfile = !id || id === user?._id;
+
+  const [viewedUser, setViewedUser] = useState(null);
+  const profileUser = isOwnProfile ? user : viewedUser;
+
   const [editing, setEditing] = useState(false);
   const [email, setEmail] = useState("");
   const [bio, setBio] = useState("");
@@ -15,17 +25,36 @@ export default function Profile() {
   const [copied, setCopied] = useState(false);
   const [loadingText, setLoadingText] = useState("");
 
+  /* ================= FETCH PROFILE ================= */
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+
+    if (isOwnProfile) {
       setEmail(user.email || "");
       setBio(user.bio || "");
       setDob(user.dob || "");
       setCountry(user.country || "");
       setProfilePicture(user.profilePicture || "");
+    } else {
+      const fetchUser = async () => {
+        try {
+          const res = await api.get(`/users/${id}`);
+          setViewedUser(res.data);
+        } catch (err) {
+          console.error("Failed to load profile", err);
+        }
+      };
+      fetchUser();
     }
-  }, [user]);
+  }, [user, id, isOwnProfile]);
 
-  if (!user) return <div>Loading profile...</div>;
+  if (!profileUser) return <div>Loading profile...</div>;
+
+  /* ================= HELPERS ================= */
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 2500);
+  };
 
   const handleCopyReferral = () => {
     const refLink = `${window.location.origin}/register?ref=${user.referralCode}`;
@@ -34,12 +63,18 @@ export default function Profile() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const showToast = (type, message) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 2500);
+  /* ================= REFRESH PROFILE ================= */
+  const refreshProfile = async () => {
+    if (isOwnProfile) {
+      const res = await api.get("/users/me");
+      setUser(res.data);
+    } else {
+      const res = await api.get(`/users/${profileUser._id}`);
+      setViewedUser(res.data);
+    }
   };
 
-  // 📸 Handle Image Upload
+  /* ================= IMAGE UPLOAD ================= */
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -51,34 +86,34 @@ export default function Profile() {
 
     try {
       setLoadingText("Uploading photo...");
-      const res = await fetch("https://api.cloudinary.com/v1_1/djt1zq25a/image/upload", {
-        method: "POST",
-        body: data,
-      });
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/djt1zq25a/image/upload",
+        { method: "POST", body: data }
+      );
 
       const uploaded = await res.json();
       if (uploaded.secure_url) {
         setProfilePicture(uploaded.secure_url);
-        const updatedUser = await updateProfile({ profilePicture: uploaded.secure_url });
+        const updatedUser = await updateProfile({
+          profilePicture: uploaded.secure_url,
+        });
         setUser(updatedUser);
         showToast("success", "Profile picture updated!");
-      } else {
-        showToast("error", "Upload failed. Try again.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       showToast("error", "Upload failed.");
     } finally {
       setLoadingText("");
     }
   };
 
-  // 💾 Handle Save
+  /* ================= SAVE PROFILE ================= */
   const handleSave = async () => {
     try {
       setLoadingText("Saving changes...");
       const updatedFields = { email, bio, dob, country, profilePicture };
       if (password) updatedFields.password = password;
+
       const updatedUser = await updateProfile(updatedFields);
       setUser(updatedUser);
       setEditing(false);
@@ -94,9 +129,10 @@ export default function Profile() {
     <div className="relative p-6 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Profile</h1>
 
+      {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 px-4 py-2 rounded text-white shadow transition ${
+          className={`fixed top-4 right-4 px-4 py-2 rounded text-white shadow ${
             toast.type === "success" ? "bg-green-600" : "bg-red-600"
           }`}
         >
@@ -106,102 +142,95 @@ export default function Profile() {
 
       {/* Loading Overlay */}
       {loadingText && (
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl z-50">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-2" />
-          <p className="text-blue-700 font-medium">{loadingText}</p>
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mr-2" />
+          <p className="font-medium text-blue-700">{loadingText}</p>
         </div>
       )}
 
-      {/* User Info Card */}
-      <div className="bg-white rounded-xl shadow p-5 mb-6 flex flex-col sm:flex-row sm:items-center sm:gap-5">
+      {/* Profile Card */}
+      <div className="bg-white rounded-xl shadow p-5 mb-6 flex gap-5">
         <div className="relative w-24 h-24">
           <img
-            src={profilePicture || "/default-avatar.png"}
+            src={profileUser.profilePicture || "/default-avatar.png"}
             alt="Profile"
             className="w-24 h-24 rounded-full object-cover border"
           />
-          <label className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 cursor-pointer hover:bg-blue-700">
-            <Upload className="w-4 h-4" />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-          </label>
+
+          {isOwnProfile && (
+            <label className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 cursor-pointer">
+              <Upload className="w-4 h-4" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </label>
+          )}
         </div>
 
-        <div className="flex-1 mt-4 sm:mt-0">
-          <h2 className="text-lg font-semibold text-gray-700">@{user.username}</h2>
+        <div className="flex-1">
+          <h2 className="text-lg font-semibold">@{profileUser.username}</h2>
 
-          <div className="space-y-2 text-gray-700 mt-2">
+          {!isOwnProfile && (
+            <div className="mt-2">
+              <FollowButton
+                targetUserId={profileUser._id}
+                isFollowing={user.following?.includes(profileUser._id)}
+                onUpdate={refreshProfile}
+              />
+            </div>
+          )}
+
+          <div className="mt-3 space-y-1 text-gray-700">
             <p>
               <Globe className="inline w-4 h-4 mr-2 text-blue-500" />
-              <strong>Country:</strong> {user.country || "Not set"}
+              {profileUser.country || "Not set"}
             </p>
+
             <p>
               <Users className="inline w-4 h-4 mr-2 text-blue-500" />
-              <strong>Followers:</strong> {user.followers?.length || 0} ·{" "}
-              <strong>Following:</strong> {user.following?.length || 0}
+              <strong>Followers:</strong>{" "}
+              {profileUser.followers?.length || 0} ·{" "}
+              <strong>Following:</strong>{" "}
+              {profileUser.following?.length || 0}
             </p>
+
             <p>
               <strong>Points:</strong>{" "}
-              <span className="text-green-600 font-semibold">{user.points}</span>
-            </p>
-          </div>
-
-          {/* Referral Link Section */}
-          <div className="mt-4 bg-gray-50 p-3 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2 font-medium">
-              Invite friends and earn rewards
-            </p>
-            <div className="flex items-center justify-between bg-white border rounded-lg p-2">
-              <span className="truncate text-gray-700 text-sm">
-                {`${window.location.origin}/register?ref=${user.referralCode}`}
+              <span className="text-green-600 font-semibold">
+                {profileUser.points}
               </span>
-              <button
-                onClick={handleCopyReferral}
-                className="ml-3 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-              >
-                {copied ? (
-                  <CheckCircle className="w-4 h-4" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </button>
-            </div>
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Editable Profile Details */}
-      <div className="bg-white rounded-xl shadow p-5">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Details</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block font-medium">Email</label>
+      {/* EDIT PROFILE (OWN PROFILE ONLY) */}
+      {isOwnProfile && (
+        <div className="bg-white rounded-xl shadow p-5">
+          <h3 className="text-lg font-semibold mb-4">Edit Details</h3>
+
+          <div className="space-y-4">
             <input
               className="w-full border rounded p-2"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={!editing}
+              placeholder="Email"
             />
-          </div>
 
-          <div>
-            <label className="block font-medium">Bio</label>
             <textarea
               className="w-full border rounded p-2"
               rows={3}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               disabled={!editing}
+              placeholder="Bio"
             />
-          </div>
 
-          <div>
-            <label className="block font-medium">Date of Birth</label>
             <input
               className="w-full border rounded p-2"
               type="date"
@@ -209,67 +238,53 @@ export default function Profile() {
               onChange={(e) => setDob(e.target.value)}
               disabled={!editing}
             />
-          </div>
 
-          <div>
-            <label className="block font-medium">Country</label>
             <input
               className="w-full border rounded p-2"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               disabled={!editing}
-              placeholder="Country of origin"
+              placeholder="Country"
             />
-          </div>
 
-          {editing && (
-            <div>
-              <label className="block font-medium">Change Password</label>
+            {editing && (
               <input
                 className="w-full border rounded p-2"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password (optional)"
+                placeholder="New password (optional)"
               />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Buttons */}
-        <div className="mt-6 flex gap-3">
-          {editing ? (
-            <>
+          <div className="mt-6 flex gap-3">
+            {editing ? (
+              <>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  className="px-4 py-2 bg-gray-300 rounded"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
               <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={() => setEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded"
               >
-                Save
+                Edit Profile
               </button>
-              <button
-                onClick={() => {
-                  setEditing(false);
-                  setEmail(user.email);
-                  setBio(user.bio || "");
-                  setDob(user.dob || "");
-                  setCountry(user.country || "");
-                  setPassword("");
-                }}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setEditing(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Edit Profile
-            </button>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
