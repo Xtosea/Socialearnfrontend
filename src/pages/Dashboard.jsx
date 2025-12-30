@@ -82,40 +82,7 @@ export default function Dashboard() {
             Total Points: <span className="font-semibold">{user.points || 0}</span>
           </p>
 
-// Inside your Dashboard component, below DailyLoginCalendar
 
-{/* ================= DAILY LOGIN HISTORY ================= */}
-{user?.dailyLogin?.history && user.dailyLogin.history.length > 0 && (
-  <section className="mt-6">
-    <h2 className="text-2xl font-semibold mb-4 text-center">
-      Daily Login History
-    </h2>
-
-    <div className="max-h-64 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b">
-            <th className="py-1 px-2">Date</th>
-            <th className="py-1 px-2">Points Earned</th>
-            <th className="py-1 px-2">Streak</th>
-          </tr>
-        </thead>
-        <tbody>
-          {user.dailyLogin.history
-            .slice()
-            .reverse() // show latest first
-            .map((entry, idx) => (
-              <tr key={idx} className="border-b last:border-none">
-                <td className="py-1 px-2">{new Date(entry.date).toLocaleDateString()}</td>
-                <td className="py-1 px-2">{entry.points}</td>
-                <td className="py-1 px-2">{entry.streak}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  </section>
-)}
 
           {/* Monthly Progress Bar */}
           <div className="mt-3 w-full bg-gray-200 rounded-full h-4">
