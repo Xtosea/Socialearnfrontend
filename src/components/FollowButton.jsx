@@ -1,6 +1,6 @@
 // src/components/FollowButton.jsx
-import { useState } from "react";
-import { followUser, unfollowUser } from "../api/user";
+import React, { useState } from "react";
+import api from "../api/api";
 
 export default function FollowButton({ targetUserId, isFollowing, onUpdate }) {
   const [loading, setLoading] = useState(false);
@@ -8,12 +8,14 @@ export default function FollowButton({ targetUserId, isFollowing, onUpdate }) {
   const handleClick = async () => {
     try {
       setLoading(true);
+
       if (isFollowing) {
-        await unfollowUser(targetUserId);
+        await api.put(`/users/unfollow/${targetUserId}`);
       } else {
-        await followUser(targetUserId);
+        await api.put(`/users/follow/${targetUserId}`);
       }
-      onUpdate();
+
+      onUpdate && onUpdate();
     } catch (err) {
       alert(err.response?.data?.message || "Action failed");
     } finally {
