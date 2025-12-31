@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { Copy, CheckCircle, Globe, Users, Upload, Loader2 } from "lucide-react";
 import FollowButton from "../components/FollowButton";
+import UserRow from "../components/UserRow";
 import api from "../api/api";
 
 export default function Profile() {
@@ -35,24 +36,25 @@ export default function Profile() {
       setDob(user.dob || "");
       setCountry(user.country || "");
       setProfilePicture(user.profilePicture || "");
-      fetchSuggestedUsers(); // fetch other users to follow
+      fetchSuggestedUsers();
     } else {
-      const fetchUser = async () => {
-        try {
-          const res = await api.get(`/users/${id}`);
-          setViewedUser(res.data);
-        } catch (err) {
-          console.error("Failed to load profile", err);
-        }
-      };
-      fetchUser();
+      fetchViewedUser();
     }
-  }, [user, id, isOwnProfile]);
+  }, [user, id]);
+
+  const fetchViewedUser = async () => {
+    try {
+      const res = await api.get(`/users/${id}`);
+      setViewedUser(res.data);
+    } catch (err) {
+      console.error("Failed to load profile", err);
+    }
+  };
 
   /* ================= SUGGESTED USERS ================= */
   const fetchSuggestedUsers = async () => {
     try {
-      const res = await api.get("/users/suggested"); // backend route returning users except current user
+      const res = await api.get("/users/suggested");
       setSuggestedUsers(res.data);
     } catch (err) {
       console.error("Failed to fetch suggested users", err);
@@ -78,8 +80,7 @@ export default function Profile() {
       setUser(res.data);
       fetchSuggestedUsers();
     } else {
-      const res = await api.get(`/users/${profileUser._id}`);
-      setViewedUser(res.data);
+      fetchViewedUser();
     }
   };
 
@@ -159,7 +160,7 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Profile Card */}
+      {/* PROFILE CARD */}
       <div className="bg-white rounded-xl shadow p-5 mb-6 flex gap-5">
         <div className="relative w-24 h-24">
           <img
@@ -216,7 +217,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* REFERRAL LINK */}
+      {/* REFERRAL */}
       {isOwnProfile && (
         <div className="mt-4 bg-gray-50 p-3 rounded-lg">
           <p className="text-sm text-gray-600 mb-2 font-medium">
@@ -228,97 +229,21 @@ export default function Profile() {
             </span>
             <button
               onClick={handleCopyReferral}
-              className="ml-3 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              className="ml-3 px-3 py-1 bg-blue-600 text-white rounded"
             >
-              {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
             </button>
           </div>
         </div>
       )}
 
-      {/* EDIT PROFILE (OWN PROFILE ONLY) */}
-      {isOwnProfile && (
-        <div className="bg-white rounded-xl shadow p-5 mb-6">
-          <h3 className="text-lg font-semibold mb-4">Edit Details</h3>
-
-          <div className="space-y-4">
-            <input
-              className="w-full border rounded p-2"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={!editing}
-              placeholder="Email"
-            />
-
-            <textarea
-              className="w-full border rounded p-2"
-              rows={3}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              disabled={!editing}
-              placeholder="Bio"
-            />
-
-            <input
-              className="w-full border rounded p-2"
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              disabled={!editing}
-            />
-
-            <input
-              className="w-full border rounded p-2"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              disabled={!editing}
-              placeholder="Country"
-            />
-
-            {editing && (
-              <input
-                className="w-full border rounded p-2"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="New password (optional)"
-              />
-            )}
-          </div>
-
-          <div className="mt-6 flex gap-3">
-            {editing ? (
-              <>
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-blue-600 text-white rounded"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="px-4 py-2 bg-gray-300 rounded"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setEditing(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
-              >
-                Edit Profile
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* SUGGESTED USERS / FOLLOW */}
+      {/* SUGGESTED USERS */}
       {isOwnProfile && suggestedUsers.length > 0 && (
-        <div className="bg-white rounded-xl shadow p-5">
-          <h3 className="text-lg font-semibold mb-4">Suggested Users to Follow</h3>
+        <div className="bg-white rounded-xl shadow p-5 mt-6">
+          <h3 className="text-lg font-semibold mb-4">
+            Suggested Users to Follow
+          </h3>
+
           <div className="flex flex-col gap-3">
             {suggestedUsers.map((u) => {
               const alreadyFollowing = user.following?.includes(u._id);
@@ -330,7 +255,8 @@ export default function Profile() {
                   className="flex items-center justify-between p-2 border rounded"
                 >
                   <div className="flex items-center gap-2">
-                    <span>@{u.username}</span>
+                    <UserRow user={u} />
+
                     {isFollower && !alreadyFollowing && (
                       <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
                         Follows you
