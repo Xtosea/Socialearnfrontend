@@ -1,6 +1,6 @@
 // src/components/FollowButton.jsx
 import React, { useState } from "react";
-import api from "../api/api";
+import { followUser, unfollowUser } from "../api/user";
 
 export default function FollowButton({ targetUserId, isFollowing, onUpdate }) {
   const [loading, setLoading] = useState(false);
@@ -10,9 +10,9 @@ export default function FollowButton({ targetUserId, isFollowing, onUpdate }) {
       setLoading(true);
 
       if (isFollowing) {
-        await api.put(`/users/unfollow/${targetUserId}`);
+        await unfollowUser(targetUserId);
       } else {
-        await api.put(`/users/follow/${targetUserId}`);
+        await followUser(targetUserId);
       }
 
       onUpdate && onUpdate();
