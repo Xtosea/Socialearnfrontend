@@ -14,13 +14,13 @@ export const updateProfile = async (data) => {
 
 // ✅ Follow user
 export const followUser = async (userId) => {
-  const res = await api.post(`/users/follow/${userId}`);
+  const res = await api.put(`/users/follow/${userId}`);
   return res.data;
 };
 
 // ✅ Unfollow user
 export const unfollowUser = async (userId) => {
-  const res = await api.post(`/users/unfollow/${userId}`);
+  const res = await api.put(`/users/unfollow/${userId}`);
   return res.data;
 };
 
