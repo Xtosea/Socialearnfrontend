@@ -1,20 +1,23 @@
+// src/pages/Dashboard.jsx
 import React, { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { getVideoTasks } from "../api/tasks";
-import { getPromotionCosts } from "../api/promotion";
 import { Link } from "react-router-dom";
-import api from "../api/api";
-import DailyLoginCalendar from "../components/DailyLoginCalendar";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import {
   FaYoutube,
   FaFacebook,
   FaInstagram,
   FaTwitter,
   FaTiktok,
+  FaLinkedin,
+  FaGlobe,
 } from "react-icons/fa";
+
+import { AuthContext } from "../context/AuthContext";
+import { getVideoTasks } from "../api/tasks";
+import { getPromotionCosts } from "../api/promotion";
+import api from "../api/api";
+import DailyLoginCalendar from "../components/DailyLoginCalendar";
 
 export default function Dashboard() {
   const { user, setUser } = useContext(AuthContext);
@@ -63,7 +66,7 @@ export default function Dashboard() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 30000); // refresh every 30s
     return () => clearInterval(interval);
   }, [user]);
 
@@ -88,28 +91,40 @@ export default function Dashboard() {
           Total Points: <span className="font-semibold">{user.points || 0}</span>
         </p>
 
-        {/* MAIN DASHBOARD LINKS */}
+        {/* DASHBOARD LINKS WITH ICONS */}
         <div className="flex flex-wrap justify-center gap-3 mt-4">
-          <Link to="/social-feed" className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-            🌍 Submit Video
+          <Link
+            to="/social-feed"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            <FaGlobe size={20} /> 🌍 Submit Video
           </Link>
-          <Link to="/promoted/watch/youtube" className="px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
-            🎬 Watch Promoted Videos
+
+          <Link
+            to="/promoted/watch/youtube"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+          >
+            <FaYoutube size={20} /> 🎬 Watch Promoted Videos
           </Link>
-          <Link to="/promoted/watch/twitter" className="px-5 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600">
-            🐦 Twitter Videos
+
+          <Link
+            to="/promoted/watch/twitter"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+          >
+            <FaTwitter size={20} /> 🐦 Twitter Videos
           </Link>
-          <Link to="/promoted/watch/linkedin" className="px-5 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800">
-            🔗 LinkedIn Videos
+
+          <Link
+            to="/promoted/watch/linkedin"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800"
+          >
+            <FaLinkedin size={20} /> 🔗 LinkedIn Videos
           </Link>
         </div>
       </header>
 
       {/* DAILY LOGIN */}
-      <DailyLoginCalendar
-        dailyLogin={user.dailyLogin || {}}
-        setUser={setUser}
-      />
+      <DailyLoginCalendar dailyLogin={user.dailyLogin || {}} setUser={setUser} />
 
       {loading && (
         <p className="text-center text-gray-500 mt-4">
@@ -141,6 +156,7 @@ export default function Dashboard() {
         <h2 className="text-2xl font-semibold mb-4 text-center">
           Promoted Tasks & Submissions
         </h2>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {PROMOTED_CARDS.map((card) => {
             const performLink =
@@ -164,8 +180,7 @@ export default function Dashboard() {
                 >
                   <div className="flex justify-between items-center">
                     <h3 className="font-bold capitalize">
-                      {card.platform}{" "}
-                      {card.type === "watch" ? "Views" : "Actions"}
+                      {card.platform} {card.type === "watch" ? "Views" : "Actions"}
                     </h3>
                     {ICONS[card.platform]}
                   </div>
