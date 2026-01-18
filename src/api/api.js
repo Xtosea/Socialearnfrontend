@@ -65,6 +65,12 @@ export const claimDailyLogin = () => api.post("/rewards/daily-login");
 export const getDailyLoginStatus = () => api.get("/rewards/daily-login"); // optional, if you want to fetch calendar info
 
 // =========================================================
+// 🧩 POST / FEED ROUTES
+// =========================================================
+export const createPost = (data) => api.post("/posts", data);
+export const fetchPosts = () => api.get("/posts");
+
+// =========================================================
 // 👤 AUTH ROUTES
 // =========================================================
 export const loginUser = (data) => api.post("/auth/login", data);
