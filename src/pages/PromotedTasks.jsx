@@ -1,42 +1,24 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { LeaderboardContext } from "../context/LeaderboardContext";
-
 import WatchPlayer from "../components/WatchPlayer";
-import ActionCard from "../components/ActionCard";
-import { promoteTask } from "../api/tasks";
 import api from "../api/api";
 
-// -----------------------------
-// Fetch promoted tasks from backend
-// -----------------------------
-const getPromotedTasks = (normalizedType, platform) => {
-  return api.get(`/tasks/promoted/${normalizedType}/${platform}`);
-};
-
-export default function PromotedTasks({ type }) {
+export default function PromotedTasks() {
   const { platform } = useParams();
   const { user, setUser } = useContext(AuthContext);
-  const { fetchLeaderboard } = useContext(LeaderboardContext);
 
-  const normalizedType = type === "watch" ? "video" : type;
   const [tasks, setTasks] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [loadingTaskId, setLoadingTaskId] = useState(null);
 
-  // -----------------------------
-  // Fetch tasks
-  // -----------------------------
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await getPromotedTasks(normalizedType, platform);
-      const tasksData = response.data?.tasks ?? response.data ?? [];
-      setTasks(tasksData);
+      const res = await api.get(`/tasks/promoted/video/${platform}`);
+      setTasks(res.data.tasks ?? []);
     } catch (err) {
-      console.error("Failed to fetch promoted tasks:", err);
+      console.error(err);
       setTasks([]);
     } finally {
       setLoading(false);
@@ -45,117 +27,33 @@ export default function PromotedTasks({ type }) {
 
   useEffect(() => {
     if (platform) fetchTasks();
-  }, [normalizedType, platform]);
+  }, [platform]);
 
-  // -----------------------------
-  // Handle promoting a task
-  // -----------------------------
-  const handlePromote = async (task) => {
-    if (!user) return;
-    const cost = task.promoteCost || 50;
-    if (user.points < cost) {
-      alert(`You need ${cost} points to promote this task!`);
-      return;
-    }
+  const nextTask = () => setCurrentIndex((prev) => (prev + 1) % tasks.length);
+  const prevTask = () => setCurrentIndex((prev) => (prev === 0 ? tasks.length - 1 : prev - 1));
 
-    setLoadingTaskId(task._id);
-    try {
-      const res = await promoteTask({ taskId: task._id, type: task.type });
-      alert(res.data.message || "Task promoted!");
-      setUser((prev) => ({ ...prev, points: res.data.remainingPoints }));
-      setTasks((prevTasks) =>
-        prevTasks.map((t) =>
-          t._id === task._id ? { ...t, promoted: true } : t
-        )
-      );
-      fetchLeaderboard();
-    } catch (err) {
-      console.error("Promotion error:", err);
-      alert("Failed to promote task");
-    } finally {
-      setLoadingTaskId(null);
-    }
-  };
+  if (loading) return <p>Loading videos...</p>;
+  if (tasks.length === 0) return <p>No videos available yet for {platform}.</p>;
 
-  // -----------------------------
-  // Auto Next Video
-  // -----------------------------
-  const handleNext = () => {
-    if (tasks.length === 0) return;
-    setCurrentIndex((prev) => (prev + 1) % tasks.length);
-  };
-
-  const handlePrev = () => {
-    if (tasks.length === 0) return;
-    setCurrentIndex((prev) =>
-      prev === 0 ? tasks.length - 1 : prev - 1
-    );
-  };
-
-  // -----------------------------
-  // Render
-  // -----------------------------
-  if (loading) return <p>Loading promoted tasks...</p>;
-
-  if (tasks.length === 0)
-    return <p>No promoted {normalizedType} tasks available yet.</p>;
-
-  const activeTask = tasks[currentIndex];
+  const task = tasks[currentIndex];
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      {/* 🌟 Dynamic Heading */}
-      <h2 className="text-2xl font-bold mb-4 capitalize text-center">
-        {platform === "youtube" && "🎬 Promoted YouTube Video"}
-        {platform === "facebook" && "📘 Promoted Facebook Video"}
-        {platform === "instagram" && "📸 Promoted Instagram Video"}
-        {platform === "tiktok" && "🎵 Promoted TikTok Video"}
-        {platform === "twitter" && "🐦 Promoted Twitter Video"}
-        {!["youtube", "facebook", "instagram", "tiktok", "twitter"].includes(platform) &&
-          `Promoted ${platform} Video`}
+    <div className="max-w-3xl mx-auto p-4 space-y-4">
+      <h2 className="text-2xl font-bold text-center mb-4">
+        Promoted {platform.charAt(0).toUpperCase() + platform.slice(1)} Videos
       </h2>
 
-      {/* 🎥 Video Player */}
-      {normalizedType === "video" ? (
-        <WatchPlayer
-          key={activeTask._id}
-          task={activeTask}
-          refreshTasks={handleNext} // ✅ auto-next
-          userPoints={user?.points || 0}
-          setUserPoints={(points) => setUser((prev) => ({ ...prev, points }))}
-          autoPlayNext // ✅ New prop to enable auto-play next
-        />
-      ) : (
-        <ActionCard task={activeTask} type={normalizedType} />
-      )}
+      <WatchPlayer
+        key={task._id}
+        task={task}
+        refreshTasks={nextTask}
+        userPoints={user.points}
+        setUserPoints={(points) => setUser(prev => ({ ...prev, points }))}
+      />
 
-      {/* Controls */}
-      <div className="flex justify-between items-center mt-4">
-        <button
-          onClick={handlePrev}
-          className="px-4 py-2 bg-gray-400 text-white rounded"
-        >
-          ◀ Prev
-        </button>
-        <button
-          onClick={() => handlePromote(activeTask)}
-          disabled={activeTask.promoted || loadingTaskId === activeTask._id}
-          className={`px-4 py-2 rounded text-white ${
-            activeTask.promoted
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-500 hover:bg-blue-600"
-          }`}
-        >
-          {activeTask.promoted
-            ? "Promoted"
-            : `Promote (${activeTask.promoteCost || 50} pts)`}
-        </button>
-        <button
-          onClick={handleNext}
-          className="px-4 py-2 bg-gray-400 text-white rounded"
-        >
-          Next ▶
-        </button>
+      <div className="flex justify-between mt-4">
+        <button onClick={prevTask} className="px-4 py-2 bg-gray-400 text-white rounded">◀ Prev</button>
+        <button onClick={nextTask} className="px-4 py-2 bg-gray-400 text-white rounded">Next ▶</button>
       </div>
     </div>
   );
