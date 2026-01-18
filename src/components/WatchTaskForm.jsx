@@ -1,126 +1,67 @@
-import React, { useState, useEffect } from "react";
-import api, { submitVideo } from "../api/api";
-import { io } from "socket.io-client";
+import React, { useState, useEffect, useContext } from "react";
+import api from "../../api/api";
+import { AuthContext } from "../../context/AuthContext";
 
-const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120, 150, 180];
-const WATCH_OPTIONS = [50, 100, 200, 300, 500, 1000];
-const BASE_RATE = 10; // points per 15s
-
-const isValidUrl = (string) => {
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
-  }
-};
+const SUPPORTED_PLATFORMS = ["youtube", "tiktok", "facebook", "instagram", "twitter", "linkedin"];
 
 export default function WatchTaskForm({ platform }) {
-  const [duration, setDuration] = useState(15);
-  const [watches, setWatches] = useState(50);
-  const [pointsPerView, setPointsPerView] = useState(0);
-  const [totalPointsFund, setTotalPointsFund] = useState(0);
+  const { user, setUser } = useContext(AuthContext);
   const [url, setUrl] = useState("");
-  const [msg, setMsg] = useState("");
-  const [userPoints, setUserPoints] = useState(0);
-  const [showWarning, setShowWarning] = useState(false);
+  const [duration, setDuration] = useState(30);
+  const [maxViews, setMaxViews] = useState(50);
+  const [pointsPerView, setPointsPerView] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
 
-  // Initialize socket
   useEffect(() => {
-    const socket = io(api.defaults.baseURL); // connect to backend
+    // update points per view based on duration
+    setPointsPerView(Math.ceil(duration / 15) * 10);
+  }, [duration]);
 
-    // Listen for points updates
-    socket.on("pointsUpdate", (data) => {
-      if (data.points !== undefined) setUserPoints(data.points);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
-  // Fetch user points once
-  const fetchUserPoints = async () => {
-    try {
-      const res = await api.get("/users/me");
-      setUserPoints(res.data.points || 0);
-    } catch (err) {
-      console.error("Error fetching user points:", err);
-    }
+  const isValidUrl = (url) => {
+    return ["youtube.com", "youtu.be", "tiktok.com", "facebook.com", "instagram.com", "twitter.com", "linkedin.com"]
+      .some((p) => url.includes(p));
   };
-
-  useEffect(() => {
-    fetchUserPoints();
-  }, []);
-
-  // Recalculate points and fund
-  useEffect(() => {
-  const cost = BASE_RATE * (duration / 15);
-  const fund = cost * watches;
-
-  setPointsPerView(cost);
-  setTotalPointsFund(fund);
-  setShowWarning(fund > userPoints);
-}, [duration, watches, userPoints]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!url || !isValidUrl(url)) return alert("Paste a valid video URL");
 
-    if (!url || !isValidUrl(url)) return alert("Please paste a valid video URL eg. https://youtu.be/QTT3A9y57P4?si=RygEIbkc5DE5WK-K");
-
-    if (totalPointsFund > userPoints) return alert("❌ Not enough points to create this video promotion");
+    const totalCost = pointsPerView * maxViews;
+    if (totalCost > (user.points || 0)) return alert("❌ Not enough points to submit");
 
     try {
       setLoading(true);
-
-      const res = await submitVideo({
+      const res = await api.post("/tasks/watch/submit", {
         url,
         platform,
         duration,
-        points: pointsPerView,
-        maxWatches: watches,
-        fund: totalPointsFund,
+        pointsPerView,
+        maxViews,
       });
 
-      // Backend returns updated points
-      const updatedPoints = res.data.points ?? userPoints;
-      setUserPoints(updatedPoints);
-
-      setMsg("✅ YouTube video view promotion submitted!");
+      // Deduct points
+      setUser(prev => ({ ...prev, points: res.data.newPoints || prev.points - totalCost }));
+      setMsg("✅ Video submitted successfully!");
       setUrl("");
-      setDuration(15);
-      setWatches(50);
-      setShowWarning(false);
-
-      setTimeout(() => setMsg(""), 4000);
     } catch (err) {
-      console.error("Submission error:", err);
-      setMsg("❌ Submission failed! Please check your data or login status.");
-      setTimeout(() => setMsg(""), 4000);
+      console.error(err);
+      setMsg("❌ Submission failed.");
     } finally {
       setLoading(false);
+      setTimeout(() => setMsg(""), 4000);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-6 p-6 bg-white rounded shadow space-y-4">
-      <div className="text-center text-lg font-bold text-purple-700">
-        🎯 Your Points Balance: {userPoints}
-      </div>
-
-      <h2 className="text-xl font-bold">{platform} Video View Promotion</h2>
-
-      {msg && (
-        <p className={msg.startsWith("✅") ? "text-green-600" : "text-red-600"}>
-          {msg}
-        </p>
-      )}
+    <div className="max-w-xl mx-auto p-4 bg-white shadow rounded space-y-4">
+      <h2 className="text-xl font-bold">Submit {platform} Video</h2>
+      {msg && <p className={msg.startsWith("✅") ? "text-green-600" : "text-red-600"}>{msg}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
           type="url"
-          placeholder={`Paste ${platform} video URL eg. https://youtu.be/QTT3A9y57P4?si=RygEIbkc5DE5WK-K`}
+          placeholder={`Paste ${platform} video URL`}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className="w-full p-2 border rounded"
@@ -132,77 +73,25 @@ export default function WatchTaskForm({ platform }) {
           onChange={(e) => setDuration(parseInt(e.target.value))}
           className="w-full p-2 border rounded"
         >
-          {DURATION_OPTIONS.map((d) => (
-            <option key={d} value={d}>
-              {d} sec
-            </option>
-          ))}
+          {[15, 30, 45, 60, 90, 120].map((d) => <option key={d} value={d}>{d} sec</option>)}
         </select>
 
         <select
-          value={watches}
-          onChange={(e) => setWatches(parseInt(e.target.value))}
+          value={maxViews}
+          onChange={(e) => setMaxViews(parseInt(e.target.value))}
           className="w-full p-2 border rounded"
         >
-          {WATCH_OPTIONS.map((w) => (
-            <option key={w} value={w}>
-              {w} Views
-            </option>
-          ))}
+          {[50, 100, 200, 500, 1000].map((v) => <option key={v} value={v}>{v} Views</option>)}
         </select>
 
-        <div className="bg-gray-100 p-3 rounded space-y-1">
-          <p className="font-bold text-blue-700">
-            Reward Per View: {pointsPerView} points
-          </p>
-          <p className="font-bold text-indigo-700">
-            Total Points Required: {totalPointsFund}
-          </p>
-          {showWarning && (
-            <p className="text-red-600 font-semibold">
-              ❌ You don’t have enough points to fund this video promotion.
-            </p>
-          )}
-        </div>
+        <p>Total Points Required: {pointsPerView * maxViews}</p>
 
         <button
           type="submit"
-          disabled={showWarning || loading}
-          className={`w-full p-2 rounded text-white ${
-            showWarning || loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700"
-          }`}
+          disabled={loading}
+          className={`w-full p-2 rounded text-white ${loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}
         >
-          {loading ? (
-            <span className="flex items-center justify-center space-x-2">
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                ></path>
-              </svg>
-              <span>Submitting...</span>
-            </span>
-          ) : showWarning ? (
-            "Insufficient Points"
-          ) : (
-            "Submit For Video View Promotion"
-          )}
+          {loading ? "Submitting..." : "Submit Video"}
         </button>
       </form>
     </div>
