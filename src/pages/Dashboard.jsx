@@ -87,13 +87,22 @@ export default function Dashboard() {
         <p className="text-gray-600 text-lg">
           Total Points: <span className="font-semibold">{user.points || 0}</span>
         </p>
-<Link
-  to="/social-feed"
-  className="inline-block mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700"
->
-  🌍 Open Social Feed
-</Link>
 
+        {/* MAIN DASHBOARD LINKS */}
+        <div className="flex flex-wrap justify-center gap-3 mt-4">
+          <Link to="/social-feed" className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+            🌍 Submit Video
+          </Link>
+          <Link to="/promoted/watch/youtube" className="px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
+            🎬 Watch Promoted Videos
+          </Link>
+          <Link to="/promoted/watch/twitter" className="px-5 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600">
+            🐦 Twitter Videos
+          </Link>
+          <Link to="/promoted/watch/linkedin" className="px-5 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800">
+            🔗 LinkedIn Videos
+          </Link>
+        </div>
       </header>
 
       {/* DAILY LOGIN */}
@@ -132,7 +141,6 @@ export default function Dashboard() {
         <h2 className="text-2xl font-semibold mb-4 text-center">
           Promoted Tasks & Submissions
         </h2>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {PROMOTED_CARDS.map((card) => {
             const performLink =
