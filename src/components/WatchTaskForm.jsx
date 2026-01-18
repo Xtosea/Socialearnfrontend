@@ -14,17 +14,16 @@ export default function WatchTaskForm({ platform }) {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    // update points per view based on duration
     setPointsPerView(Math.ceil(duration / 15) * 10);
   }, [duration]);
 
   const isValidUrl = (url) => {
-    return ["youtube.com", "youtu.be", "tiktok.com", "facebook.com", "instagram.com", "twitter.com", "linkedin.com"]
-      .some((p) => url.includes(p));
+    return SUPPORTED_PLATFORMS.some((p) => url.includes(p));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!url || !isValidUrl(url)) return alert("Paste a valid video URL");
 
     const totalCost = pointsPerView * maxViews;
@@ -32,22 +31,21 @@ export default function WatchTaskForm({ platform }) {
 
     try {
       setLoading(true);
+
       const res = await api.post("/tasks/watch/submit", {
         url,
         platform,
         duration,
         points: pointsPerView,
-        maxWatches: watches,
-        fund: totalPointsFund,
-        url,
-        platform,
-        duration,
-        pointsPerView,
-        maxViews,
+        maxWatches: maxViews,
+        fund: totalCost,
       });
 
-      // Deduct points
-      setUser(prev => ({ ...prev, points: res.data.newPoints || prev.points - totalCost }));
+      setUser(prev => ({
+        ...prev,
+        points: res.data.newPoints ?? prev.points - totalCost,
+      }));
+
       setMsg("✅ Video submitted successfully!");
       setUrl("");
     } catch (err) {
@@ -62,6 +60,7 @@ export default function WatchTaskForm({ platform }) {
   return (
     <div className="max-w-xl mx-auto p-4 bg-white shadow rounded space-y-4">
       <h2 className="text-xl font-bold">Submit {platform} Video</h2>
+
       {msg && <p className={msg.startsWith("✅") ? "text-green-600" : "text-red-600"}>{msg}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-3">
