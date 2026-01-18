@@ -29,18 +29,21 @@ export default function WatchPlayer({
   const [showPlayPopup, setShowPlayPopup] = useState(false);
 
   // 🔌 Connect socket
-  useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000");
-    socketRef.current.emit("joinRoom", user._id);
+useEffect(() => {
+  socketRef.current = io(
+    import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000"
+  );
 
-    socketRef.current.on("walletUpdated", ({ userId, balance }) => {
-      if (userId === user._id) setUserPoints(balance);
-    });
+  socketRef.current.emit("joinRoom", user._id);
 
-    return () => {
-      socketRef.current.disconnect();
-    };
-  }, [user._id, setUserPoints]);
+  socketRef.current.on("pointsUpdate", ({ points }) => {
+    setUserPoints(points);
+  });
+
+  return () => {
+    socketRef.current.disconnect();
+  };
+}, [user._id, setUserPoints]);
 
   // 🧹 Cleanup
   useEffect(() => {
