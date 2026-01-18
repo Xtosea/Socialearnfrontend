@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import Confetti from "react-confetti";
-import api from "../api/api";
+import api from "./api/api";
 import { AuthContext } from "../context/AuthContext";
 import { io } from "socket.io-client";
 
