@@ -4,6 +4,8 @@ import { AuthContext } from "../context/AuthContext";
 
 const SUPPORTED_PLATFORMS = ["youtube", "tiktok", "facebook", "instagram", "twitter", "linkedin"];
 
+console.log("AuthContext:", { user, setUser });
+
 export default function WatchTaskForm({ platform }) {
   const { user, setUser } = useContext(AuthContext);
   const [url, setUrl] = useState("");
