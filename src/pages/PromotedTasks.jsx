@@ -13,17 +13,17 @@ export default function PromotedTasks() {
   const [loading, setLoading] = useState(true);
 
   const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get(`/tasks/promoted/video/${platform}`);
-      setTasks(res.data.tasks ?? []);
-    } catch (err) {
-      console.error(err);
-      setTasks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const res = await api.get(`/tasks/promoted/video/${platform}`);
+    setTasks(res.data); // ✅ correct
+  } catch (err) {
+    console.error(err);
+    setTasks([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (platform) fetchTasks();
