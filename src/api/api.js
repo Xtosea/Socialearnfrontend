@@ -58,6 +58,14 @@ api.interceptors.response.use(
 
 // Inside src/api/api.js
 
+// src/api/api.js
+
+// =========================================================
+// 🎯 REWARD POINTS FOR A POST OR ACTION
+// =========================================================
+export const rewardPoints = ({ userId, postId, actionType }) =>
+  api.post("/points/reward", { userId, postId, actionType });
+
 // =========================================================
 // 🎁 DAILY LOGIN / REWARD ROUTES
 // =========================================================
