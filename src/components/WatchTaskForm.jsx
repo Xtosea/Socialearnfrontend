@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import api from "../api/api";
-import { AuthContext } from "../../context/AuthContext";
+import { AuthContext } from "../context/AuthContext";
 
 const SUPPORTED_PLATFORMS = ["youtube", "tiktok", "facebook", "instagram", "twitter", "linkedin"];
 
