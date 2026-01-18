@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import SocialEmbed from "./SocialEmbed";
+import PostItem from "./PostItem";
 import { createPost, fetchPosts } from "../api/api";
 
 // ------------------------------
@@ -59,8 +59,8 @@ const SocialFeed = () => {
 
       const res = await createPost({ url: inputUrl });
 
-      // Add new post to top
-      setPosts([res.data, ...posts]);
+      // Add new post to the top
+      setPosts((prev) => [res.data, ...prev]);
       setInputUrl("");
     } catch (err) {
       console.error(err);
@@ -101,10 +101,9 @@ const SocialFeed = () => {
 
       <hr />
 
+      {/* POSTS */}
       {posts.map((post) => (
-        <div key={post._id} style={{ marginBottom: 30 }}>
-          <SocialEmbed url={post.url} />
-        </div>
+        <PostItem key={post._id} post={post} />
       ))}
     </div>
   );
