@@ -22,44 +22,46 @@ export default function WatchTaskForm({ platform }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!url || !isValidUrl(url)) return alert("Paste a valid video URL");
+  if (!url || !isValidUrl(url)) {
+    alert("Paste a valid video URL");
+    return;
+  }
 
-    const totalCost = pointsPerView * maxViews;
-    if (totalCost > (user.points || 0)) return alert("❌ Not enough points to submit");
+  const totalCost = pointsPerView * maxViews;
+  if (totalCost > (user?.points || 0)) {
+    alert("❌ Not enough points to submit");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const res = await api.post("/tasks/video", {
-  url,
-  platform,
-  duration,
-  points: pointsPerView,
-  maxWatches: maxViews,
-});
+    const res = await api.post("/tasks/video", {
+      url,
+      platform,
+      duration,
+      points: pointsPerView,
+      maxWatches: maxViews,
+    });
 
-setUser(prev => ({
-  ...prev,
-  points: res.data.points,
-}));
+    // ✅ SAFE UPDATE
+    setUser(prev => ({
+      ...prev,
+      points: res.data.points,
+    }));
 
-      setUser(prev => ({
-        ...prev,
-        points: res.data.newPoints ?? prev.points - totalCost,
-      }));
-
-      setMsg("✅ Video submitted successfully!");
-      setUrl("");
-    } catch (err) {
-      console.error(err);
-      setMsg("❌ Submission failed.");
-    } finally {
-      setLoading(false);
-      setTimeout(() => setMsg(""), 4000);
-    }
-  };
+    setMsg("✅ Video submitted successfully!");
+    setUrl("");
+  } catch (err) {
+    console.error(err);
+    setMsg("❌ Submission failed.");
+  } finally {
+    setLoading(false);
+    setTimeout(() => setMsg(""), 4000);
+  }
+};
 
   return (
     <div className="max-w-xl mx-auto p-4 bg-white shadow rounded space-y-4">
