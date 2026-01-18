@@ -32,7 +32,7 @@ export default function WatchTaskForm({ platform }) {
 
     try {
       setLoading(true);
-      const res = await submitVideo({
+      const res = await api.post("/tasks/watch/submit", {
         url,
         platform,
         duration,
