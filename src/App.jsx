@@ -1,6 +1,8 @@
 import React, { useContext, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
+import SocialFeedPage from "./pages/SocialFeedPage";
+
 // 🧩 Pages
 import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
@@ -86,6 +88,9 @@ return (
     <Route path="/wallet" element={<Wallet />} />  
     <Route path="/history" element={<History />} />  
     <Route path="/edit-profile" element={<ProfileEditor />} />  
+
+{/* 🧑‍🤝‍🧑 Social Feed */}
+  <Route path="/social-feed" element={<SocialFeedPage />} />
 
     {/* 🎥 Watch tasks */}  
     <Route path="/tasks/watch/youtube" element={<WatchYouTube />} />  
