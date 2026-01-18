@@ -96,8 +96,8 @@ export default function WatchPlayer({
 
     try {
       const res = await api.post(`/tasks/watch/${task._id}/complete`);
-      const earned = res?.data?.rewardPoints || task.points || 0;
-      const newBalance = res?.data?.newBalance ?? userPoints + earned;
+      const earned = task.points;
+const newBalance = res.data.points;
 
       setUserPoints(newBalance);
       socketRef.current.emit("walletUpdate", { userId: user._id, balance: newBalance });
