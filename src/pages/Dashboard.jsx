@@ -87,6 +87,13 @@ export default function Dashboard() {
         <p className="text-gray-600 text-lg">
           Total Points: <span className="font-semibold">{user.points || 0}</span>
         </p>
+<Link
+  to="/social-feed"
+  className="inline-block mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700"
+>
+  🌍 Open Social Feed
+</Link>
+
       </header>
 
       {/* DAILY LOGIN */}
