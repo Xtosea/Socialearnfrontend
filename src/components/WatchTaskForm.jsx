@@ -32,14 +32,12 @@ export default function WatchTaskForm({ platform }) {
     try {
       setLoading(true);
 
-      const res = await api.post("/tasks/submit", {
-  userId: user._id, // make sure this is sent
+      api.post("/tasks/video", {
   url,
   platform,
   duration,
   points: pointsPerView,
   maxWatches: maxViews,
-  fund: totalCost,
 });
 
       setUser(prev => ({
