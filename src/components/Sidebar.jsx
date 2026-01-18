@@ -75,6 +75,14 @@ export default function Sidebar({ closeMenu }) {
               <LayoutDashboard className="w-4 h-4" /> Dashboard
             </Link>
 
+<Link
+  to="/social-feed"
+  onClick={closeMenu}
+  className={`flex items-center gap-2 p-2 ${isActive("/social-feed")}`}
+>
+  <Video className="w-4 h-4 text-green-500" /> Social Feed
+</Link>
+
             <Link to="/profile" onClick={closeMenu} className={`flex items-center gap-2 p-2 ${isActive("/profile")}`}>
               <User className="w-4 h-4" /> Profile
             </Link>
