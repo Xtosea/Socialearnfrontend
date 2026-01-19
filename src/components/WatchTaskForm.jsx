@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useContext } from "react";
 import api from "../api/api";
 import { AuthContext } from "../context/AuthContext";
+import SocialEmbed from "../components/SocialEmbed";
 
-const SUPPORTED_PLATFORMS = ["youtube", "tiktok", "facebook", "instagram", "twitter", "linkedin"];
-
+const SUPPORTED_PLATFORMS = [
+  "youtube",
+  "tiktok",
+  "facebook",
+  "instagram",
+  "twitter",
+  "linkedin",
+];
 
 export default function WatchTaskForm({ platform }) {
   const { user, setUser } = useContext(AuthContext);
+
   const [url, setUrl] = useState("");
   const [duration, setDuration] = useState(30);
   const [maxViews, setMaxViews] = useState(50);
@@ -18,57 +26,60 @@ export default function WatchTaskForm({ platform }) {
     setPointsPerView(Math.ceil(duration / 15) * 10);
   }, [duration]);
 
-  const isValidUrl = (url) => {
-    return SUPPORTED_PLATFORMS.some((p) => url.includes(p));
-  };
+  const isValidUrl = (url) =>
+    SUPPORTED_PLATFORMS.some((p) => url.toLowerCase().includes(p));
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!url || !isValidUrl(url)) {
-    alert("Paste a valid video URL");
-    return;
-  }
+    if (!url || !isValidUrl(url)) {
+      alert("Paste a valid video URL");
+      return;
+    }
 
-  const totalCost = pointsPerView * maxViews;
-  if (totalCost > (user?.points || 0)) {
-    alert("❌ Not enough points to submit");
-    return;
-  }
+    const totalCost = pointsPerView * maxViews;
+    if (totalCost > (user?.points || 0)) {
+      alert("❌ Not enough points to submit");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await api.post("/tasks/video", {
-      url,
-      platform,
-      duration,
-      points: pointsPerView,
-      maxWatches: maxViews,
-    });
+      const res = await api.post("/tasks/video", {
+        url,
+        platform,
+        duration,
+        points: pointsPerView,
+        maxWatches: maxViews,
+      });
 
-    // ✅ SAFE UPDATE
-    setUser(prev => ({
-      ...prev,
-      points: res.data.points,
-    }));
+      // ✅ Update user points safely
+      setUser((prev) => ({
+        ...prev,
+        points: res.data.newPoints || prev.points,
+      }));
 
-    setMsg("✅ Video submitted successfully!");
-    setUrl("");
-  } catch (err) {
-    console.error(err);
-    setMsg("❌ Submission failed.");
-  } finally {
-    setLoading(false);
-    setTimeout(() => setMsg(""), 4000);
-  }
-};
+      setMsg("✅ Video submitted successfully!");
+      setUrl("");
+    } catch (err) {
+      console.error(err);
+      setMsg("❌ Submission failed.");
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMsg(""), 4000);
+    }
+  };
 
   return (
     <div className="max-w-xl mx-auto p-4 bg-white shadow rounded space-y-4">
       <h2 className="text-xl font-bold">Submit {platform} Video</h2>
 
-      {msg && <p className={msg.startsWith("✅") ? "text-green-600" : "text-red-600"}>{msg}</p>}
+      {msg && (
+        <p className={msg.startsWith("✅") ? "text-green-600" : "text-red-600"}>
+          {msg}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
@@ -80,12 +91,23 @@ export default function WatchTaskForm({ platform }) {
           required
         />
 
+        {/* 👁️ VIDEO PREVIEW */}
+        {url && isValidUrl(url) && (
+          <div className="border rounded p-2 bg-gray-50">
+            <SocialEmbed url={url} />
+          </div>
+        )}
+
         <select
           value={duration}
           onChange={(e) => setDuration(parseInt(e.target.value))}
           className="w-full p-2 border rounded"
         >
-          {[15, 30, 45, 60, 90, 120].map((d) => <option key={d} value={d}>{d} sec</option>)}
+          {[15, 30, 45, 60, 90, 120].map((d) => (
+            <option key={d} value={d}>
+              {d} sec
+            </option>
+          ))}
         </select>
 
         <select
@@ -93,7 +115,11 @@ export default function WatchTaskForm({ platform }) {
           onChange={(e) => setMaxViews(parseInt(e.target.value))}
           className="w-full p-2 border rounded"
         >
-          {[50, 100, 200, 500, 1000].map((v) => <option key={v} value={v}>{v} Views</option>)}
+          {[50, 100, 200, 500, 1000].map((v) => (
+            <option key={v} value={v}>
+              {v} Views
+            </option>
+          ))}
         </select>
 
         <p>Total Points Required: {pointsPerView * maxViews}</p>
@@ -101,7 +127,9 @@ export default function WatchTaskForm({ platform }) {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full p-2 rounded text-white ${loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}
+          className={`w-full p-2 rounded text-white ${
+            loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+          }`}
         >
           {loading ? "Submitting..." : "Submit Video"}
         </button>
